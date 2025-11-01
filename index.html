@@ -458,67 +458,87 @@
 
         // Event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is already logged in
-            auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    currentUser = user;
-                    
-                    // Update online status
-                    try {
-                        await db.collection('users').doc(user.uid).update({
-                            isOnline: true,
-                            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    } catch (error) {
-                        console.log('User document might not exist yet');
-                    }
-                    
-                    // Redirect to app if not on login page
-                    if (window.location.pathname === '/' || window.location.pathname.includes('index.html')) {
-                        window.location.href = 'app.html';
-                    }
-                } else {
+            // Ensure UI doesn't hang on loading if auth state event is delayed (e.g., GitHub Pages)
+            let authStateHandled = false;
+            const authTimeout = setTimeout(() => {
+                if (!authStateHandled) {
+                    console.warn('Auth state timeout fallback - showing login UI');
                     showLoading(false);
                 }
-            });
+            }, 4000);
+
+            // Check if user is already logged in
+            try {
+                auth.onAuthStateChanged(async (user) => {
+                    authStateHandled = true;
+                    clearTimeout(authTimeout);
+
+                    if (user) {
+                        currentUser = user;
+                        
+                        // Update online status
+                        try {
+                            await db.collection('users').doc(user.uid).update({
+                                isOnline: true,
+                                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        } catch (error) {
+                            console.log('User document might not exist yet');
+                        }
+                        
+                        // Redirect to app from login page or base path
+                        const path = window.location.pathname || '';
+                        if (path === '/' || path.endsWith('/index.html') || path.endsWith('/testnhapyeucau/') || path.endsWith('/testnhapyeucau')) {
+                            window.location.href = 'app.html';
+                        } else {
+                            window.location.href = 'app.html';
+                        }
+                    } else {
+                        showLoading(false);
+                    }
+                });
+            } catch (err) {
+                console.error('Failed to attach auth state listener:', err);
+                showLoading(false);
+            }
 
             // Login form submission
             const loginFormEl = document.getElementById('loginForm');
-            if (loginFormEl) {
-                loginFormEl.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    const email = document.getElementById('email')?.value?.trim() || '';
-                    const password = document.getElementById('password')?.value || '';
+            loginFormEl?.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const emailEl = document.getElementById('email');
+                const passwordEl = document.getElementById('password');
+                const email = emailEl ? emailEl.value.trim() : '';
+                const password = passwordEl ? passwordEl.value : '';
 
-                    if (!email || !password) {
-                        showToast('Vui lòng nhập đầy đủ thông tin', '', 'warning');
-                        return;
-                    }
+                if (!email || !password) {
+                    showToast('Vui lòng nhập đầy đủ thông tin', '', 'warning');
+                    return;
+                }
 
-                    // Always use LOCAL persistence for persistent login
-                    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+                try {
+                    // Ensure persistence is set before attempting sign-in
+                    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+                } catch (perr) {
+                    console.warn('Failed to set auth persistence:', perr);
+                }
 
-                    signInWithEmail(email, password);
-                });
-            }
+                signInWithEmail(email, password);
+            });
 
             // Google login
             const googleLoginBtnEl = document.getElementById('googleLoginBtn');
-            if (googleLoginBtnEl) {
-                googleLoginBtnEl.addEventListener('click', signInWithGoogle);
-            }
+            googleLoginBtnEl?.addEventListener('click', signInWithGoogle);
 
 
             // Enter key support
             const passwordEl = document.getElementById('password');
-            if (passwordEl && loginFormEl) {
-                passwordEl.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        loginFormEl.dispatchEvent(new Event('submit'));
-                    }
-                });
-            }
+            passwordEl?.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    loginFormEl?.dispatchEvent(new Event('submit'));
+                }
+            });
 
 
         });
