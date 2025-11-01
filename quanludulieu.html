@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Dữ liệu - Phiếu yêu cầu dịch vụ</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="css/app.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f9fafb;
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            min-height: 100vh;
+        }
+        .nav-item {
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left-color: white;
+        }
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left-color: white;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease;
+        }
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #4f46e5;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+        }
+        .toast-item {
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="sidebar w-64 text-white p-6">
+            <div class="mb-8">
+                <h1 class="text-2xl font-bold">Quản lý Dữ liệu</h1>
+                <p class="text-white/80 text-sm mt-1">Phiếu yêu cầu dịch vụ</p>
+            </div>
+            
+            <nav class="space-y-2">
+                <a href="app.html" class="nav-item w-full text-left px-4 py-3 text-white rounded-lg flex items-center">
+                    <i class="fas fa-arrow-left mr-3"></i>
+                    Quay lại
+                </a>
+                <button onclick="showSection('import')" class="nav-item w-full text-left px-4 py-3 text-white rounded-lg flex items-center active" data-section="import">
+                    <i class="fas fa-file-import mr-3"></i>
+                    Nhập dữ liệu
+                </button>
+                <button onclick="showSection('export')" class="nav-item w-full text-left px-4 py-3 text-white rounded-lg flex items-center" data-section="export">
+                    <i class="fas fa-file-export mr-3"></i>
+                    Xuất dữ liệu
+                </button>
+                <button onclick="showSection('template')" class="nav-item w-full text-left px-4 py-3 text-white rounded-lg flex items-center" data-section="template">
+                    <i class="fas fa-file-download mr-3"></i>
+                    Tải file mẫu
+                </button>
+            </nav>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="flex-1 overflow-y-auto">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold text-gray-800">Quản lý Dữ liệu</h2>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-600">Người dùng: <span id="currentUser" class="font-medium">Đang tải...</span></span>
+                        <button onclick="logout()" class="text-red-600 hover:text-red-800">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Import Section -->
+            <section id="importSection" class="content-section p-6">
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Nhập dữ liệu</h3>
+                    <p class="text-gray-600">Nhập dữ liệu từ file CSV vào hệ thống</p>
+                </div>
+                
+                <div class="card p-6 mb-6">
+                    <h4 class="font-medium text-gray-800 mb-4">Hướng dẫn nhập dữ liệu</h4>
+                    <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                        <h5 class="font-medium text-gray-800 mb-2">Các trường bắt buộc:</h5>
+                        <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 ml-4">
+                            <li><strong>Company Name</strong> - Tên công ty</li>
+                            <li><strong>Contact Person</strong> - Người liên hệ</li>
+                            <li><strong>Phone</strong> - Điện thoại</li>
+                            <li><strong>Address</strong> - Địa chỉ</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="font-medium text-gray-800 mb-2">Các trường tùy chọn:</h5>
+                        <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 ml-4">
+                            <li><strong>Service Request Number</strong> - Mã phiếu yêu cầu</li>
+                            <li><strong>Product Code</strong> - Mã hàng</li>
+                            <li><strong>Machine Number</strong> - Số máy</li>
+                            <li><strong>Order Number</strong> - Mã số đơn hàng</li>
+                            <li><strong>Product Description</strong> - Mô tả hàng hoá</li>
+                            <li><strong>Model</strong> - Model</li>
+                            <li><strong>Serial Number</strong> - Số hiệu</li>
+                            <li><strong>Manufacturer</strong> - Hãng sản xuất</li>
+                            <li><strong>Problem Description</strong> - Mô tả vấn đề</li>
+                            <li><strong>Problem Definition</strong> - Problem definition</li>
+                            <li><strong>Service Types</strong> - Loại dịch vụ (cách nhau bằng dấu phẩy)</li>
+                            <li><strong>Service Completed</strong> - Dịch vụ đã hoàn thành</li>
+                            <li><strong>Start Date</strong> - Ngày bắt đầu</li>
+                            <li><strong>Start Time</strong> - Thời gian bắt đầu</li>
+                            <li><strong>End Date</strong> - Ngày kết thúc</li>
+                            <li><strong>End Time</strong> - Thời gian kết thúc</li>
+                            <li><strong>Total Date</strong> - Tổng thời gian - Ngày</li>
+                            <li><strong>Total Time</strong> - Tổng thời gian - Giờ</li>
+                            <li><strong>Travel Info</strong> - Thông tin di chuyển</li>
+                            <li><strong>Notes</strong> - Ghi chú</li>
+                            <li><strong>Status</strong> - Trạng thái (pending, in-progress, completed)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="card p-6">
+                    <h4 class="font-medium text-gray-800 mb-4">Chọn file để nhập</h4>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">File CSV</label>
+                        <input type="file" id="importFile" accept=".csv" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="skipDuplicates" class="mr-2">
+                            <span class="text-sm text-gray-700">Bỏ qua các bản ghi trùng lặp</span>
+                        </label>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="validateData" class="mr-2">
+                            <span class="text-sm text-gray-700">Kiểm tra dữ liệu bắt buộc</span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                        <button onclick="processImport()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                            <i class="fas fa-upload mr-2"></i> Nhập dữ liệu
+                        </button>
+                        <button onclick="downloadTemplate()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                            <i class="fas fa-download mr-2"></i> Tải file mẫu
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Import Preview -->
+                <div id="importPreview" class="card p-6 mt-6 hidden">
+                    <h4 class="font-medium text-gray-800 mb-4">Xem trước dữ liệu</h4>
+                    <div class="overflow-x-auto">
+                        <table id="importPreviewTable" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr id="importPreviewHeader"></tr>
+                            </thead>
+                            <tbody id="importPreviewBody" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Export Section -->
+            <section id="exportSection" class="content-section p-6 hidden">
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Xuất dữ liệu</h3>
+                    <p class="text-gray-600">Xuất dữ liệu ra các định dạng khác nhau</p>
+                </div>
+                
+                <!-- Export by User -->
+                <div class="card p-6 mb-6">
+                    <h4 class="font-medium text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-user mr-2 text-indigo-600"></i>
+                        Xuất theo người dùng
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Chọn người dùng</label>
+                            <select id="exportUserSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                <option value="">Tất cả người dùng</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Chọn định dạng</label>
+                            <select id="exportUserFormat" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                <option value="csv">CSV</option>
+                                <option value="excel">Excel</option>
+                                <option value="json">JSON</option>
+                                <option value="html">HTML</option>
+                                <option value="markdown">Markdown</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="exportByUser()" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                        <i class="fas fa-download mr-2"></i> Xuất dữ liệu
+                    </button>
+                </div>
+                
+                <!-- Export by Date Range -->
+                <div class="card p-6 mb-6">
+                    <h4 class="font-medium text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-calendar mr-2 text-indigo-600"></i>
+                        Xuất theo khoảng ngày
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Từ ngày</label>
+                            <input type="date" id="exportDateFrom" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Đến ngày</label>
+                            <input type="date" id="exportDateTo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Chọn định dạng</label>
+                            <select id="exportDateFormat" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                <option value="csv">CSV</option>
+                                <option value="excel">Excel</option>
+                                <option value="json">JSON</option>
+                                <option value="html">HTML</option>
+                                <option value="markdown">Markdown</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="exportByDateRange()" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                        <i class="fas fa-download mr-2"></i> Xuất dữ liệu
+                    </button>
+                </div>
+                
+                <!-- Export All Data -->
+                <div class="card p-6">
+                    <h4 class="font-medium text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-database mr-2 text-indigo-600"></i>
+                        Xuất tất cả dữ liệu
+                    </h4>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Chọn định dạng</label>
+                        <select id="exportAllFormat" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <option value="csv">CSV</option>
+                            <option value="excel">Excel</option>
+                            <option value="json">JSON</option>
+                            <option value="html">HTML</option>
+                            <option value="markdown">Markdown</option>
+                        </select>
+                    </div>
+                    <button onclick="exportAllData()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                        <i class="fas fa-download mr-2"></i> Xuất tất cả dữ liệu
+                    </button>
+                </div>
+            </section>
+            
+            <!-- Template Section -->
+            <section id="templateSection" class="content-section p-6 hidden">
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Tải file mẫu</h3>
+                    <p class="text-gray-600">Tải file mẫu để nhập dữ liệu đúng định dạng</p>
+                </div>
+                
+                <div class="card p-6">
+                    <h4 class="font-medium text-gray-800 mb-4">File mẫu CSV</h4>
+                    <p class="text-gray-600 mb-4">File mẫu chứa tất cả các trường có thể nhập vào hệ thống</p>
+                    <button onclick="downloadTemplate()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                        <i class="fas fa-download mr-2"></i> Tải file mẫu CSV
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+    
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg p-6 flex items-center">
+            <div class="loading-spinner mr-3"></div>
+            <span>Đang xử lý...</span>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCB9uARJMMaY-N6ikCRvOscgMNOCE5R0n4",
+            authDomain: "luubbkythuatnhap.firebaseapp.com",
+            projectId: "luubbkythuatnhap",
+            storageBucket: "luubbkythuatnhap.firebasestorage.app",
+            messagingSenderId: "914373130415",
+            appId: "1:914373130415:web:f2aad04a7138d43c6afc5a"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Global variables
+        let currentUser = null;
+        let serviceRequests = [];
+        let allUsers = [];
+        let importData = [];
+
+        // Utility functions
+        function showLoading(show = true) {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (show) {
+                loadingScreen.classList.remove('hidden');
+            } else {
+                loadingScreen.classList.add('hidden');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastId = 'toast-' + Date.now();
+
+            const bgColors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500',
+                info: 'bg-blue-500'
+            };
+
+            const toastHtml = `
+                <div id="${toastId}" class="bg-white rounded-lg shadow-lg p-4 mb-2 toast-item">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 ${bgColors[type]} rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info'} text-white"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-800">${message}</p>
+                        </div>
+                        <button onclick="document.getElementById('${toastId}').remove()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toast = document.getElementById(toastId);
+                if (toast) toast.remove();
+            }, 5000);
+        }
+
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Map section names to their correct IDs
+            const sectionIdMap = {
+                'import': 'importSection',
+                'export': 'exportSection',
+                'template': 'templateSection'
+            };
+
+            // Get the correct section ID
+            const sectionId = sectionIdMap[sectionName] || (sectionName + 'Section');
+            
+            // Show selected section
+            const sectionElement = document.getElementById(sectionId);
+            if (sectionElement) {
+                sectionElement.classList.remove('hidden');
+            } else {
+                console.error('Section not found:', sectionId);
+                console.log('Available sections:', Array.from(document.querySelectorAll('.content-section')).map(el => el.id));
+                return;
+            }
+
+            // Add active class to corresponding nav item
+            const navItem = document.querySelector(`[data-section="${sectionName}"]`);
+            if (navItem) {
+                navItem.classList.add('active');
+            }
+        }
+
+        // Authentication
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('currentUser').textContent = user.displayName || user.email;
+                
+                // Check if user is admin
+                try {
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        if (userData.role !== 'admin') {
+                            showToast('Bạn không có quyền truy cập trang này. Chỉ admin mới có quyền vào mục "Quản lý dữ liệu".', 'error');
+                            setTimeout(() => {
+                                window.location.href = 'app.html';
+                            }, 2000);
+                            return;
+                        }
+                    } else {
+                        showToast('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.', 'error');
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 2000);
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error checking user role:', error);
+                    showToast('Lỗi kiểm tra quyền truy cập. Vui lòng đăng nhập lại.', 'error');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                    return;
+                }
+                
+                await loadData();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = 'index.html';
+            }).catch(error => {
+                showToast('Lỗi đăng xuất: ' + error.message, 'error');
+            });
+        }
+
+        // Load data
+        async function loadData() {
+            try {
+                showLoading(true);
+                
+                // Load service requests
+                const snapshot = await db.collection('serviceRequests').get();
+                serviceRequests = [];
+                snapshot.forEach(doc => {
+                    serviceRequests.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Load users
+                const usersSnapshot = await db.collection('users').get();
+                allUsers = [];
+                usersSnapshot.forEach(doc => {
+                    allUsers.push({ uid: doc.id, ...doc.data() });
+                });
+                
+                // Populate user selects
+                populateUserSelects();
+                
+                showLoading(false);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showToast('Lỗi tải dữ liệu: ' + error.message, 'error');
+                showLoading(false);
+            }
+        }
+
+        function populateUserSelects() {
+            const exportUserSelect = document.getElementById('exportUserSelect');
+            if (exportUserSelect) {
+                exportUserSelect.innerHTML = '<option value="">Tất cả người dùng</option>';
+                allUsers.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.uid;
+                    option.textContent = user.displayName || user.email || 'Unknown User';
+                    exportUserSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Import functions
+        document.getElementById('importFile').addEventListener('change', handleFileSelect);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const fileName = file.name.toLowerCase();
+            if (!fileName.endsWith('.csv')) {
+                showToast('Vui lòng chọn file CSV', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    importData = parseCSV(e.target.result);
+                    showImportPreview(importData);
+                } catch (error) {
+                    console.error('Error reading file:', error);
+                    showToast('Lỗi đọc file: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n').filter(line => line.trim());
+            if (lines.length === 0) return [];
+
+            // Improved CSV parsing to handle quoted fields
+            const parseCSVLine = (line) => {
+                const result = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    if (char === '"') {
+                        if (inQuotes && line[i + 1] === '"') {
+                            // Escaped quote
+                            current += '"';
+                            i++; // Skip next quote
+                        } else {
+                            // Toggle quote state
+                            inQuotes = !inQuotes;
+                        }
+                    } else if (char === ',' && !inQuotes) {
+                        // Field separator
+                        result.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                
+                // Add last field
+                result.push(current.trim());
+                return result;
+            };
+
+            const headers = parseCSVLine(lines[0]).map(h => h.replace(/"/g, ''));
+            const data = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = parseCSVLine(lines[i]);
+                if (values.length === headers.length) {
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header] = values[index] ? values[index].replace(/"/g, '') : '';
+                    });
+                    data.push(row);
+                }
+            }
+
+            return data;
+        }
+
+        function showImportPreview(data) {
+            if (data.length === 0) {
+                showToast('File không có dữ liệu', 'warning');
+                return;
+            }
+
+            const preview = document.getElementById('importPreview');
+            const headerRow = document.getElementById('importPreviewHeader');
+            const bodyRows = document.getElementById('importPreviewBody');
+
+            // Show preview (max 10 rows)
+            const previewData = data.slice(0, 10);
+            const headers = Object.keys(previewData[0] || {});
+
+            // Create header
+            headerRow.innerHTML = headers.map(header => 
+                `<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">${header}</th>`
+            ).join('');
+
+            // Create rows
+            bodyRows.innerHTML = previewData.map(row => {
+                const cells = headers.map(header => 
+                    `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row[header] || ''}</td>`
+                ).join('');
+                return `<tr>${cells}</tr>`;
+            }).join('');
+
+            preview.classList.remove('hidden');
+
+            if (data.length > 10) {
+                bodyRows.innerHTML += `
+                    <tr>
+                        <td colspan="${headers.length}" class="px-6 py-4 text-center text-sm text-gray-500">
+                            ... và ${data.length - 10} dòng nữa
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        async function processImport() {
+            if (!importData || importData.length === 0) {
+                showToast('Vui lòng chọn file để nhập', 'warning');
+                return;
+            }
+
+            const skipDuplicates = document.getElementById('skipDuplicates').checked;
+            const validateData = document.getElementById('validateData').checked;
+
+            showLoading(true);
+
+            try {
+                const results = await importServiceRequests(importData, {
+                    skipDuplicates,
+                    validateData
+                });
+
+                let message = `Nhập dữ liệu hoàn tất!\n`;
+                message += `- Thành công: ${results.success}\n`;
+                message += `- Thất bại: ${results.failed}\n`;
+                if (results.duplicates > 0) {
+                    message += `- Bỏ qua trùng lặp: ${results.duplicates}\n`;
+                }
+
+                if (results.errors.length > 0) {
+                    message += `\nLỗi chi tiết:\n`;
+                    results.errors.slice(0, 5).forEach(error => {
+                        message += `- ${error}\n`;
+                    });
+                    if (results.errors.length > 5) {
+                        message += `... và ${results.errors.length - 5} lỗi nữa\n`;
+                    }
+                }
+
+                showToast(message, results.failed > 0 ? 'warning' : 'success');
+
+                // Reset form
+                document.getElementById('importFile').value = '';
+                document.getElementById('importPreview').classList.add('hidden');
+                importData = [];
+
+                // Reload data
+                await loadData();
+
+            } catch (error) {
+                console.error('Import error:', error);
+                showToast('Lỗi nhập dữ liệu: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function importServiceRequests(data, options = {}) {
+            const results = {
+                success: 0,
+                failed: 0,
+                duplicates: 0,
+                errors: []
+            };
+
+            const skipDuplicates = options.skipDuplicates || false;
+            const validateData = options.validateData || false;
+
+            for (let i = 0; i < data.length; i++) {
+                try {
+                    const item = data[i];
+                    let requestData = {
+                        serviceRequestNumber: item.serviceRequestNumber || item['Service Request Number'] || `IMPORT-${Date.now()}-${i}`,
+                        companyName: item.companyName || item['Company Name'] || item.company || '',
+                        address: item.address || item.Address || '',
+                        productCode: item.productCode || item['Product Code'] || item.code || '',
+                        machineNumber: item.machineNumber || item['Machine Number'] || item.machine || '',
+                        orderNumber: item.orderNumber || item['Order Number'] || item.order || '',
+                        productDescription: item.productDescription || item['Product Description'] || item.description || '',
+                        model: item.model || item.Model || '',
+                        serialNumber: item.serialNumber || item['Serial Number'] || item.serial || '',
+                        manufacturer: item.manufacturer || item.Manufacturer || item.brand || '',
+                        problemDescription: item.problemDescription || item['Problem Description'] || item.problem || '',
+                        problemDefinition: item.problemDefinition || item['Problem Definition'] || '',
+                        serviceCompleted: item.serviceCompleted || item['Service Completed'] || '',
+                        notes: item.notes || item.Notes || '',
+                        contactPerson: item.contactPerson || item['Contact Person'] || item.contact || '',
+                        phone: item.phone || item.Phone || item.telephone || '',
+                        startDate: item.startDate || item['Start Date'] || '',
+                        startTime: item.startTime || item['Start Time'] || '',
+                        endDate: item.endDate || item['End Date'] || '',
+                        endTime: item.endTime || item['End Time'] || '',
+                        totalDate: item.totalDate || item['Total Date'] || '',
+                        totalTime: item.totalTime || item['Total Time'] || '',
+                        travelInfo: item.travelInfo || item['Travel Info'] || item.travel || '',
+                        userId: currentUser.uid,
+                        userEmail: currentUser.email,
+                        userDisplayName: currentUser.displayName,
+                        status: item.status || 'pending',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    // Parse service types if it's a string
+                    if (item.serviceTypes || item['Service Types']) {
+                        const serviceTypesStr = item.serviceTypes || item['Service Types'];
+                        if (typeof serviceTypesStr === 'string') {
+                            requestData.serviceTypes = serviceTypesStr.split(',').map(s => s.trim());
+                        } else if (Array.isArray(serviceTypesStr)) {
+                            requestData.serviceTypes = serviceTypesStr;
+                        }
+                    }
+
+                    // Validate required fields
+                    if (validateData) {
+                        if (!requestData.companyName || requestData.companyName.trim() === '') {
+                            results.failed++;
+                            results.errors.push(`Dòng ${i + 1}: Thiếu tên công ty`);
+                            continue;
+                        }
+                        if (!requestData.contactPerson || requestData.contactPerson.trim() === '') {
+                            results.failed++;
+                            results.errors.push(`Dòng ${i + 1}: Thiếu người liên hệ`);
+                            continue;
+                        }
+                        if (!requestData.phone || requestData.phone.trim() === '') {
+                            results.failed++;
+                            results.errors.push(`Dòng ${i + 1}: Thiếu điện thoại`);
+                            continue;
+                        }
+                        if (!requestData.address || requestData.address.trim() === '') {
+                            results.failed++;
+                            results.errors.push(`Dòng ${i + 1}: Thiếu địa chỉ`);
+                            continue;
+                        }
+                    }
+
+                    // Check for duplicates
+                    if (skipDuplicates) {
+                        const isDuplicate = serviceRequests.some(request =>
+                            request.serviceRequestNumber === requestData.serviceRequestNumber
+                        );
+                        if (isDuplicate) {
+                            results.duplicates++;
+                            continue;
+                        }
+                    }
+
+                    await db.collection('serviceRequests').add(requestData);
+                    results.success++;
+                } catch (error) {
+                    results.failed++;
+                    results.errors.push(`Dòng ${i + 1}: ${error.message}`);
+                }
+            }
+
+            return results;
+        }
+
+        // Export functions
+        async function exportByUser() {
+            const userId = document.getElementById('exportUserSelect').value;
+            const format = document.getElementById('exportUserFormat').value;
+            
+            // Use the processExportByUser function from parent window if available
+            if (window.opener && window.opener.processExportByUser) {
+                const success = window.opener.processExportByUser(userId, format);
+                if (success) {
+                    showToast(`Xuất dữ liệu theo người dùng ${format.toUpperCase()} thành công!`, 'success');
+                }
+            } else {
+                // Fallback to local implementation
+                try {
+                    // Filter data by user
+                    let filteredRequests = userId ?
+                        serviceRequests.filter(request => request.userId === userId) :
+                        serviceRequests;
+                    
+                    const data = exportServiceRequests(filteredRequests, format);
+                    downloadFile(data, `service-requests-by-user-${Date.now()}.${format}`);
+                    showToast(`Xuất dữ liệu theo người dùng ${format.toUpperCase()} thành công!`, 'success');
+                } catch (error) {
+                    console.error('Export error:', error);
+                    showToast('Lỗi xuất dữ liệu: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function exportByDateRange() {
+            const dateFrom = document.getElementById('exportDateFrom').value;
+            const dateTo = document.getElementById('exportDateTo').value;
+            const format = document.getElementById('exportDateFormat').value;
+            
+            // Use the processExportByDateRange function from parent window if available
+            if (window.opener && window.opener.processExportByDateRange) {
+                const success = window.opener.processExportByDateRange(dateFrom, dateTo, format);
+                if (success) {
+                    showToast(`Xuất dữ liệu theo khoảng ngày ${format.toUpperCase()} thành công!`, 'success');
+                }
+            } else {
+                // Fallback to local implementation
+                try {
+                    // Filter data by date range
+                    let filteredRequests = serviceRequests.filter(request => {
+                        // Handle timestamp objects
+                        let requestDate;
+                        if (request.createdAt && typeof request.createdAt.toDate === 'function') {
+                            requestDate = new Date(request.createdAt.toDate());
+                        } else if (request.createdAt) {
+                            requestDate = new Date(request.createdAt);
+                        } else {
+                            return false; // Skip if no date
+                        }
+                        
+                        let matchesDate = true;
+                        
+                        if (dateFrom) {
+                            const fromDate = new Date(dateFrom);
+                            matchesDate = matchesDate && requestDate >= fromDate;
+                        }
+                        if (dateTo) {
+                            const toDate = new Date(dateTo);
+                            toDate.setHours(23, 59, 59, 999); // End of day
+                            matchesDate = matchesDate && requestDate <= toDate;
+                        }
+                        
+                        return matchesDate;
+                    });
+                    
+                    const data = exportServiceRequests(filteredRequests, format);
+                    downloadFile(data, `service-requests-by-date-${Date.now()}.${format}`);
+                    showToast(`Xuất dữ liệu theo khoảng ngày ${format.toUpperCase()} thành công!`, 'success');
+                } catch (error) {
+                    console.error('Export error:', error);
+                    showToast('Lỗi xuất dữ liệu: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function exportAllData() {
+            const format = document.getElementById('exportAllFormat').value;
+            
+            try {
+                const data = exportServiceRequests(serviceRequests, format);
+                downloadFile(data, `service-requests-all-${Date.now()}.${format}`);
+                showToast(`Xuất tất cả dữ liệu ${format.toUpperCase()} thành công!`, 'success');
+            } catch (error) {
+                console.error('Export error:', error);
+                showToast('Lỗi xuất dữ liệu: ' + error.message, 'error');
+            }
+        }
+
+        function exportServiceRequests(requests, format) {
+            switch (format) {
+                case 'json':
+                    return exportAsJSON(requests);
+                case 'csv':
+                    return exportAsCSV(requests);
+                case 'excel':
+                    return exportAsExcel(requests);
+                case 'html':
+                    return exportAsHTML(requests);
+                case 'markdown':
+                    return exportAsMarkdown(requests);
+                default:
+                    throw new Error('Unsupported export format');
+            }
+        }
+        
+        // Additional export functions for compatibility
+        function exportAsJSON(requests) {
+            return JSON.stringify(requests, null, 2);
+        }
+        
+        function exportAsCSV(requests) {
+            const headers = [
+                'Service Request Number', 'Company Name', 'Address', 'Product Code', 'Machine Number',
+                'Order Number', 'Product Description', 'Model', 'Serial Number', 'Manufacturer',
+                'Problem Description', 'Problem Definition', 'Service Completed', 'Notes',
+                'Contact Person', 'Phone', 'Start Date', 'Start Time', 'End Date', 'End Time',
+                'Total Date', 'Total Time', 'Travel Info', 'Service Types', 'Status'
+            ];
+
+            const rows = requests.map(request => {
+                return [
+                    request.serviceRequestNumber || '',
+                    request.companyName || '',
+                    request.address || '',
+                    request.productCode || '',
+                    request.machineNumber || '',
+                    request.orderNumber || '',
+                    request.productDescription || '',
+                    request.model || '',
+                    request.serialNumber || '',
+                    request.manufacturer || '',
+                    request.problemDescription || '',
+                    request.problemDefinition || '',
+                    request.serviceCompleted || '',
+                    request.notes || '',
+                    request.contactPerson || '',
+                    request.phone || '',
+                    request.startDate || '',
+                    request.startTime || '',
+                    request.endDate || '',
+                    request.endTime || '',
+                    request.totalDate || '',
+                    request.totalTime || '',
+                    request.travelInfo || '',
+                    request.serviceTypes ? request.serviceTypes.join('; ') : '',
+                    request.status || ''
+                ].map(field => `"${field}"`).join(',');
+            });
+
+            return [headers.join(','), ...rows].join('\n');
+        }
+        
+        function exportAsExcel(requests) {
+            // Create a simple HTML table that can be opened in Excel
+            const headers = [
+                'Service Request Number', 'Company Name', 'Address', 'Product Code', 'Machine Number',
+                'Order Number', 'Product Description', 'Model', 'Serial Number', 'Manufacturer',
+                'Problem Description', 'Problem Definition', 'Service Completed', 'Notes',
+                'Contact Person', 'Phone', 'Start Date', 'Start Time', 'End Date', 'End Time',
+                'Total Date', 'Total Time', 'Travel Info', 'Service Types', 'Status'
+            ];
+
+            const rows = requests.map(request => {
+                return [
+                    request.serviceRequestNumber || '',
+                    request.companyName || '',
+                    request.address || '',
+                    request.productCode || '',
+                    request.machineNumber || '',
+                    request.orderNumber || '',
+                    request.productDescription || '',
+                    request.model || '',
+                    request.serialNumber || '',
+                    request.manufacturer || '',
+                    request.problemDescription || '',
+                    request.problemDefinition || '',
+                    request.serviceCompleted || '',
+                    request.notes || '',
+                    request.contactPerson || '',
+                    request.phone || '',
+                    request.startDate || '',
+                    request.startTime || '',
+                    request.endDate || '',
+                    request.endTime || '',
+                    request.totalDate || '',
+                    request.totalTime || '',
+                    request.travelInfo || '',
+                    request.serviceTypes ? request.serviceTypes.join('; ') : '',
+                    request.status || ''
+                ].map(field => `"${field}"`).join('\t');
+            });
+
+            const excelContent = `
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <style>
+                        table { border-collapse: collapse; }
+                        td, th { border: 1px solid #ccc; padding: 5px; }
+                        th { background-color: #f1f1f1; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <table>
+                        <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+                        ${rows.map(row => `<tr>${row.split('\t').map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}
+                    </table>
+                </body>
+                </html>
+            `;
+
+            return excelContent;
+        }
+        
+        function exportAsHTML(requests) {
+            const html = `
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách Phiếu yêu cầu dịch vụ</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; }
+        .request { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .request h3 { margin: 0 0 10px 0; color: #333; }
+        .field { margin-bottom: 5px; }
+        .label { font-weight: bold; color: #666; }
+        .status { padding: 2px 8px; border-radius: 3px; font-size: 0.9em; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-in-progress { background: #fff3cd; color: #856404; }
+        .status-pending { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Danh sách Phiếu yêu cầu dịch vụ (${requests.length})</h1>
+    ${requests.map(request => `
+        <div class="request">
+            <h3>${request.serviceRequestNumber} - ${request.companyName}</h3>
+            <div class="field"><span class="label">Model:</span> ${request.model || 'N/A'}</div>
+            <div class="field"><span class="label">Người liên hệ:</span> ${request.contactPerson} (${request.phone})</div>
+            <div class="field"><span class="label">Loại dịch vụ:</span> ${request.serviceTypes ? request.serviceTypes.join(', ') : 'N/A'}</div>
+            <div class="field"><span class="label">Vấn đề:</span> ${request.problemDescription || 'N/A'}</div>
+            <div class="field"><span class="label">Trạng thái:</span> <span class="status status-${request.status || 'pending'}">${request.status === 'completed' ? 'Hoàn thành' : request.status === 'in-progress' ? 'Đang thực hiện' : 'Chờ xử lý'}</span></div>
+        </div>
+    `).join('')}
+</body>
+</html>`;
+            return html;
+        }
+        
+        function exportAsMarkdown(requests) {
+            let markdown = `# Danh sách Phiếu yêu cầu dịch vụ (${requests.length})\n\n`;
+
+            requests.forEach(request => {
+                markdown += `## ${request.serviceRequestNumber} - ${request.companyName}\n\n`;
+                markdown += `**Model:** ${request.model || 'N/A'}\n\n`;
+                markdown += `**Người liên hệ:** ${request.contactPerson} (${request.phone})\n\n`;
+                markdown += `**Loại dịch vụ:** ${request.serviceTypes ? request.serviceTypes.join(', ') : 'N/A'}\n\n`;
+                markdown += `**Mô tả vấn đề:** ${request.problemDescription || 'N/A'}\n\n`;
+                markdown += `**Trạng thái:** ${request.status === 'completed' ? 'Hoàn thành' : request.status === 'in-progress' ? 'Đang thực hiện' : 'Chờ xử lý'}\n\n`;
+                markdown += '---\n\n';
+            });
+
+            return markdown;
+        }
+
+
+
+
+
+        function downloadFile(data, filename) {
+            const blob = new Blob([data], {
+                type: filename.endsWith('.csv') ? 'text/csv' :
+                      filename.endsWith('.json') ? 'application/json' :
+                      filename.endsWith('.html') ? 'text/html' :
+                      filename.endsWith('.xls') || filename.endsWith('.xlsx') ? 'application/vnd.ms-excel' :
+                      'text/markdown'
+            });
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadTemplate() {
+            const csvTemplate = `Company Name,Contact Person,Phone,Address,Service Request Number,Product Code,Machine Number,Order Number,Product Description,Model,Serial Number,Manufacturer,Problem Description,Problem Definition,Service Types,Service Completed,Start Date,Start Time,End Date,End Time,Total Date,Total Time,Travel Info,Notes,Status
+"Công ty ABC","Nguyễn Văn A","0123456789","Địa chỉ ABC","SR-001","P001","M001","ORD001","Mô tả sản phẩm","Model XYZ","SN12345","Hãng XYZ","Vấn đề mô tả","Problem definition","Lắp đặt,Sửa chữa","Dịch vụ đã hoàn thành","2023-01-01","08:00","2023-01-02","17:00","1","9","Thông tin di chuyển","Ghi chú here","pending"`;
+
+            downloadFile(csvTemplate, 'service-request-template.csv');
+            showToast('Tải file mẫu thành công!', 'success');
+        }
+    </script>
+</body>
+</html>

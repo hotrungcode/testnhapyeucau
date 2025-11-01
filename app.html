@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quản lý Phiếu yêu cầu dịch vụ - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center z-50">
+        <div class="text-center text-white">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <h2 class="text-2xl font-bold mb-2">Quản lý Phiếu yêu cầu dịch vụ</h2>
+            <p class="text-white/80">Đang tải dashboard...</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-40">
+        <div class="px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <button id="sidebarToggle" class="text-gray-500 hover:text-gray-700 focus:outline-none mr-3">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-clipboard-list text-white text-sm"></i>
+                        </div>
+                        <h1 class="text-lg sm:text-xl font-bold text-gray-800">Quản lý Phiếu yêu cầu</h1>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <!-- Notifications - Hidden on mobile -->
+                    <button class="relative text-gray-500 hover:text-gray-700 hidden sm:block">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                    </button>
+
+                    <!-- User Menu - Mobile optimized -->
+                    <div class="relative">
+                        <button id="userMenuBtn" class="flex items-center space-x-2 sm:space-x-3 text-gray-700 hover:text-gray-900">
+                            <img id="userAvatar" src="https://picsum.photos/seed/user/40/40.jpg" alt="Avatar" class="w-8 h-8 rounded-full">
+                            <div class="hidden lg:block text-left">
+                                <p id="userName" class="text-sm font-medium">Loading...</p>
+                                <p id="userRole" class="text-xs text-gray-500">Loading...</p>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs hidden sm:block"></i>
+                        </button>
+
+                        <!-- User Dropdown -->
+                        <div id="userDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 hidden z-50">
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user mr-2"></i> Hồ sơ
+                            </a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-cog mr-2"></i> Cài đặt
+                            </a>
+                            <hr class="my-1">
+                            <button id="logoutBtn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                <i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex pt-16">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar w-64 fixed left-0 top-16 bottom-0 z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+            <nav class="p-4">
+                <div class="space-y-2">
+                    <button class="nav-item w-full text-left px-4 py-3 text-white rounded-lg flex items-center" data-section="dashboard">
+                        <i class="fas fa-tachometer-alt mr-3"></i>
+                        Dashboard
+                    </button>
+                    <button class="nav-item active w-full text-left px-4 py-3 text-white rounded-lg flex items-center" data-section="links">
+                        <i class="fas fa-clipboard-list mr-3"></i>
+                        DS Phiếu yêu cầu
+                    </button>
+                    <hr class="my-4 border-white/20">
+                    <button class="nav-item w-full text-left px-4 py-3 text-white rounded-lg flex items-center admin-only" onclick="window.location.href='users.html'">
+                        <i class="fas fa-users mr-3"></i>
+                        Users
+                    </button>
+                    <button class="nav-item w-full text-left px-4 py-3 text-white rounded-lg flex items-center" data-section="new-request">
+                        <i class="fas fa-plus mr-3"></i>
+                        Tạo Phiếu mới
+                    </button>
+                    <a href="quanludulieu.html" class="nav-item w-full text-left px-4 py-3 text-white rounded-lg flex items-center admin-only">
+                        <i class="fas fa-database mr-3"></i>
+                        Quản lý Dữ liệu
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-64 p-4 sm:p-6">
+            <!-- Dashboard Section -->
+            <section id="dashboardSection" class="content-section fade-in">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Dashboard</h2>
+                    <p class="text-gray-600">Tổng quan hệ thống</p>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 sm:mb-8">
+                    <div class="stat-card p-6 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-sm">Tổng Phiếu yêu cầu</p>
+                                <p id="totalServiceRequests" class="text-3xl font-bold text-white">0</p>
+                            </div>
+                            <i class="fas fa-clipboard-list text-3xl text-white/50"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card p-6 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-sm">Phiếu Hoàn thành</p>
+                                <p id="completedRequests" class="text-3xl font-bold text-white">0</p>
+                            </div>
+                            <i class="fas fa-check-circle text-3xl text-white/50"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card p-6 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-sm">Phiếu Đang thực hiện</p>
+                                <p id="inProgressRequests" class="text-3xl font-bold text-white">0</p>
+                            </div>
+                            <i class="fas fa-clock text-3xl text-white/50"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card p-6 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-sm">Phiếu Chờ xử lý</p>
+                                <p id="pendingRequests" class="text-3xl font-bold text-white">0</p>
+                            </div>
+                            <i class="fas fa-hourglass-half text-3xl text-white/50"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Stats - Admin Only -->
+                <div class="admin-only mb-6 sm:mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Thống kê theo người dùng</h3>
+                    <div id="userStatsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- User stats will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Recent Service Requests -->
+                <div class="card p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Phiếu yêu cầu Gần đây</h3>
+                    <div id="recentServiceRequests" class="space-y-3">
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                            <p>Đang tải...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card p-4 sm:p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Thao tác Nhanh</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button onclick="showSection('new-request')" class="bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 transition text-sm sm:text-base">
+                            <i class="fas fa-plus mr-2"></i> Tạo Phiếu yêu cầu
+                        </button>
+                        <button onclick="showSection('links')" class="bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 transition text-sm sm:text-base">
+                            <i class="fas fa-list mr-2"></i> Quản lý Phiếu
+                        </button>
+                    </div>
+                </div>
+            </section>
+ 
+            <!-- New Service Request Section -->
+            <section id="newRequestSection" class="content-section hidden">
+                <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+                    <div>
+                        <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800">Tạo Phiếu yêu cầu dịch vụ</h2>
+                        <p class="text-gray-600 text-sm">Tạo phiếu yêu cầu dịch vụ mới</p>
+                    </div>
+                </div>
+
+                <!-- Service Request Form -->
+                <div class="card p-4 sm:p-6 mb-6">
+                    <form id="serviceRequestForm" class="space-y-6">
+                        <!-- Service Request Number -->
+                        <div class="form-group">
+                            <label class="form-label">Service request number</label>
+                            <input type="text" id="serviceRequestNumber" class="form-input" readonly>
+                        </div>
+
+                        <!-- Company Information -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                            <div class="form-group">
+                                <label class="form-label">Tên công ty</label>
+                                <input type="text" id="companyName" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Địa chỉ</label>
+                                <input type="text" id="address" class="form-input" required>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                            <div class="form-group">
+                                <label class="form-label">Người liên hệ</label>
+                                <input type="text" id="contactPerson" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Điện thoại</label>
+                                <input type="tel" id="phone" class="form-input" required>
+                            </div>
+                        </div>
+
+                        <!-- Product Information -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                            <div class="form-group">
+                                <label class="form-label">Mã hàng</label>
+                                <input type="text" id="productCode" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Số máy</label>
+                                <input type="text" id="machineNumber" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Mã số đơn hàng</label>
+                                <input type="text" id="orderNumber" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Model</label>
+                                <input type="text" id="model" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Số hiệu</label>
+                                <input type="text" id="serialNumber" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Hãng sản xuất</label>
+                                <input type="text" id="manufacturer" class="form-input">
+                            </div>
+                        </div>
+
+                        <!-- Product Description -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                            <div class="form-group">
+                                <label class="form-label">Mô tả hàng hoá</label>
+                                <textarea id="productDescription" class="form-input form-textarea"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Mô tả tình trạng</label>
+                                <textarea id="problemDescription" class="form-input form-textarea" placeholder="Mô tả chi tiết tình trạng thiết bị..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Service Types -->
+                        <div class="form-group">
+                            <label class="form-label">Loại dịch vụ</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="service_installation" value="Lắp đặt">
+                                    <span>Lắp đặt</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="service_warranty" value="Bảo hành">
+                                    <span>Bảo hành</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="service_repair" value="Sửa chữa">
+                                    <span>Sửa chữa</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="service_maintenance" value="Bảo trì">
+                                    <span>Bảo trì</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="service_training" value="Đào tạo">
+                                    <span>Đào tạo</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="service_other" value="Dịch vụ khác">
+                                    <span>Dịch vụ khác</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="form-group">
+                            <label class="form-label">Ghi chú</label>
+                            <textarea id="notes" class="form-input form-textarea" placeholder="Thiết bị hoạt động ổn định, đường chuẩn vẫn còn áp dụng được với các mẫu phân tích hiện tại"></textarea>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex justify-end space-x-4 pt-6 border-t">
+                            <button type="button" onclick="resetServiceRequestForm()" class="btn-secondary">
+                                <i class="fas fa-times mr-2"></i> Hủy
+                            </button>
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-save mr-2"></i> Lưu Phiếu yêu cầu
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Service Requests Section -->
+            <section id="linksSection" class="content-section hidden">
+                <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+                    <div>
+                        <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800">Quản lý Phiếu yêu cầu dịch vụ</h2>
+                        <p class="text-gray-600 text-sm">Xem và quản lý các phiếu yêu cầu dịch vụ đã tạo</p>
+                    </div>
+                    <button onclick="showSection('new-request')" class="bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm w-full sm:w-auto">
+                        <i class="fas fa-plus mr-2"></i> Tạo phiếu mới
+                    </button>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="card p-3 sm:p-4 mb-4 sm:mb-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+                        <input type="text" id="serviceRequestSearch" placeholder="Tìm kiếm phiếu..." class="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" style="font-size: 16px;">
+                        <select id="serviceRequestStatus" class="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" style="font-size: 16px;">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="pending">Chờ xử lý</option>
+                            <option value="in-progress">Đang thực hiện</option>
+                            <option value="completed">Hoàn thành</option>
+                        </select>
+                        <select id="serviceRequestUser" class="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 admin-only" style="font-size: 16px;">
+                            <option value="">Tất cả người dùng</option>
+                        </select>
+                        <input type="date" id="serviceRequestDateFrom" class="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" style="font-size: 16px;">
+                        <input type="date" id="serviceRequestDateTo" class="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" style="font-size: 16px;">
+                    </div>
+                </div>
+
+
+                <!-- Service Requests Panels -->
+                <div id="serviceRequestsContainer" class="space-y-4">
+                    <!-- Loading State -->
+                    <div id="serviceRequestsLoading" class="card p-6 text-center">
+                        <div class="loading-spinner mx-auto mb-4"></div>
+                        <p class="text-gray-500 text-sm">Đang tải phiếu yêu cầu...</p>
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div id="serviceRequestsEmpty" class="card p-6 text-center hidden">
+                        <i class="fas fa-clipboard-list text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500 text-lg">Không có phiếu yêu cầu nào</p>
+                        <p class="text-gray-400 text-sm mt-2">Hãy tạo phiếu yêu cầu đầu tiên của bạn</p>
+                        <button onclick="showSection('new-request')" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                            <i class="fas fa-plus mr-2"></i> Tạo phiếu mới
+                        </button>
+                    </div>
+                    
+                    <!-- Service Requests will be populated here -->
+                    <div id="serviceRequestsList" class="space-y-4">
+                        <!-- Panels will be dynamically added here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Management Section -->
+            <section id="dataManagementSection" class="content-section hidden">
+                <div class="mb-4 sm:mb-6">
+                    <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800">Quản lý Dữ liệu</h2>
+                    <p class="text-gray-600 text-sm">Xem, nhập và xuất dữ liệu Phiếu yêu cầu dịch vụ</p>
+                </div>
+
+                <!-- Data Overview Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="stat-card p-6 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-sm">Tổng Phiếu yêu cầu</p>
+                                <p id="dataTotalServiceRequests" class="text-3xl font-bold text-white">0</p>
+                            </div>
+                            <i class="fas fa-clipboard-list text-3xl text-white/50"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card p-6 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-sm">Phiếu Hoàn thành</p>
+                                <p id="dataCompletedRequests" class="text-3xl font-bold text-white">0</p>
+                            </div>
+                            <i class="fas fa-check-circle text-3xl text-white/50"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card p-6 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-sm">Phiếu Đang thực hiện</p>
+                                <p id="dataInProgressRequests" class="text-3xl font-bold text-white">0</p>
+                            </div>
+                            <i class="fas fa-clock text-3xl text-white/50"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card p-6 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-sm">Phiếu Chờ xử lý</p>
+                                <p id="dataPendingRequests" class="text-3xl font-bold text-white">0</p>
+                            </div>
+                            <i class="fas fa-hourglass-half text-3xl text-white/50"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card p-4 sm:p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-tools mr-2 text-indigo-600"></i>
+                        Thao tác nhanh
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <a href="quanludulieu.html" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition admin-only">
+                            <i class="fas fa-file-import text-2xl text-indigo-600 mr-3"></i>
+                            <div>
+                                <h4 class="font-medium text-gray-800">Nhập dữ liệu</h4>
+                                <p class="text-sm text-gray-600">Nhập dữ liệu từ file CSV</p>
+                            </div>
+                        </a>
+                        <a href="quanludulieu.html" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition admin-only">
+                            <i class="fas fa-file-export text-2xl text-indigo-600 mr-3"></i>
+                            <div>
+                                <h4 class="font-medium text-gray-800">Xuất dữ liệu</h4>
+                                <p class="text-sm text-gray-600">Xuất dữ liệu ra nhiều định dạng</p>
+                            </div>
+                        </a>
+                        <a href="quanludulieu.html" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition admin-only">
+                            <i class="fas fa-file-download text-2xl text-indigo-600 mr-3"></i>
+                            <div>
+                                <h4 class="font-medium text-gray-800">Tải file mẫu</h4>
+                                <p class="text-sm text-gray-600">Tải file mẫu CSV để nhập dữ liệu</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="card p-3 sm:p-4 mb-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+                        <input type="text" id="dataServiceRequestSearch" placeholder="Tìm kiếm phiếu..." class="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" style="font-size: 16px;">
+                        <select id="dataServiceRequestStatus" class="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" style="font-size: 16px;">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="pending">Chờ xử lý</option>
+                            <option value="in-progress">Đang thực hiện</option>
+                            <option value="completed">Hoàn thành</option>
+                        </select>
+                        <select id="dataServiceRequestUser" class="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 admin-only" style="font-size: 16px;">
+                            <option value="">Tất cả người dùng</option>
+                        </select>
+                        <input type="date" id="dataServiceRequestDateFrom" class="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" style="font-size: 16px;">
+                        <input type="date" id="dataServiceRequestDateTo" class="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" style="font-size: 16px;">
+                    </div>
+                </div>
+
+                <!-- Data Table -->
+                <div class="card p-4 sm:p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                            <i class="fas fa-table mr-2 text-indigo-600"></i>
+                            Danh sách Phiếu yêu cầu
+                        </h3>
+                        <a href="quanludulieu.html" class="bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 transition text-sm admin-only">
+                            <i class="fas fa-cogs mr-1"></i> Quản lý dữ liệu đầy đủ
+                        </a>
+                    </div>
+                    
+                    <!-- Data Table Container -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã phiếu</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Công ty</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người liên hệ</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Điện thoại</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tạo</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataServiceRequestsTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Data rows will be populated here -->
+                                <tr id="dataLoadingRow">
+                                    <td colspan="8" class="px-6 py-4 text-center">
+                                        <div class="flex items-center justify-center">
+                                            <div class="loading-spinner mr-2"></div>
+                                            <span class="text-gray-500">Đang tải dữ liệu...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast"></div>
+    
+    <!-- Edit Service Request Modal -->
+    <div id="editServiceRequestModal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[80vh] overflow-y-auto">
+                <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-800">Chỉnh sửa Phiếu yêu cầu dịch vụ</h2>
+                    <button onclick="hideModal('editServiceRequestModal')" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="editServiceRequestForm" class="p-6 space-y-6">
+                    <input type="hidden" id="editRequestId">
+                    
+                    <!-- Service Request Number -->
+                    <div class="form-group">
+                        <label class="form-label">Mã phiếu yêu cầu</label>
+                        <input type="text" id="editServiceRequestNumber" class="form-input" required>
+                    </div>
+                    
+                    <!-- Company Information -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                        <div class="form-group">
+                            <label class="form-label">Tên công ty</label>
+                            <input type="text" id="editCompanyName" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Địa chỉ</label>
+                            <input type="text" id="editAddress" class="form-input">
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Information -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                        <div class="form-group">
+                            <label class="form-label">Người liên hệ</label>
+                            <input type="text" id="editContactPerson" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Điện thoại</label>
+                            <input type="text" id="editPhone" class="form-input">
+                        </div>
+                    </div>
+                    
+                    <!-- Product Information -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                        <div class="form-group">
+                            <label class="form-label">Mã hàng</label>
+                            <input type="text" id="editProductCode" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Số máy</label>
+                            <input type="text" id="editMachineNumber" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mã số đơn hàng</label>
+                            <input type="text" id="editOrderNumber" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Model</label>
+                            <input type="text" id="editModel" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Số hiệu</label>
+                            <input type="text" id="editSerialNumber" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hãng sản xuất</label>
+                            <input type="text" id="editManufacturer" class="form-input">
+                        </div>
+                    </div>
+                    
+                    <!-- Product Description -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                        <div class="form-group">
+                            <label class="form-label">Mô tả hàng hoá</label>
+                            <textarea id="editProductDescription" class="form-input form-textarea"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mô tả tình trạng</label>
+                            <textarea id="editProblemDescription" class="form-input form-textarea"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Problem definition</label>
+                        <textarea id="editProblemDefinition" class="form-input form-textarea"></textarea>
+                    </div>
+                    
+                    <!-- Service Types -->
+                    <div class="form-group">
+                        <label class="form-label">Loại dịch vụ</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="editServiceTypes" value="Lắp đặt">
+                                <span>Lắp đặt</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="editServiceTypes" value="Bảo hành">
+                                <span>Bảo hành</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="editServiceTypes" value="Sửa chữa">
+                                <span>Sửa chữa</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="editServiceTypes" value="Bảo trì">
+                                <span>Bảo trì</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="editServiceTypes" value="Đào tạo">
+                                <span>Đào tạo</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="editServiceTypes" value="Dịch vụ khác">
+                                <span>Dịch vụ khác</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Service Completed -->
+                    <div class="form-group">
+                        <label class="form-label">Dịch vụ đã hoàn thành & Diễn giải chi tiết dịch vụ</label>
+                        <textarea id="editServiceCompleted" class="form-input form-textarea" style="min-height: 120px;"></textarea>
+                    </div>
+                    
+                    <!-- Time Information -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                        <div class="form-group">
+                            <label class="form-label">Thời gian bắt đầu</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="date" id="editStartDate" class="form-input">
+                                <input type="time" id="editStartTime" class="form-input">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Thời gian kết thúc</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="date" id="editEndDate" class="form-input">
+                                <input type="time" id="editEndTime" class="form-input">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tổng thời gian - Ngày</label>
+                            <input type="text" id="editTotalDate" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tổng thời gian - Giờ</label>
+                            <input type="text" id="editTotalTime" class="form-input">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Thời gian di chuyển tới khách hàng và khoảng cách</label>
+                        <input type="text" id="editTravelInfo" class="form-input">
+                    </div>
+                    
+                    <!-- Notes -->
+                    <div class="form-group">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea id="editNotes" class="form-input form-textarea"></textarea>
+                    </div>
+                    
+                    <!-- Status -->
+                    <div class="form-group">
+                        <label class="form-label">Trạng thái phiếu yêu cầu</label>
+                        <select id="editStatus" class="form-input">
+                            <option value="pending">Chờ xử lý</option>
+                            <option value="in-progress">Đang thực hiện</option>
+                            <option value="completed">Hoàn thành</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end space-x-4 pt-6 border-t">
+                        <button type="button" onclick="hideModal('editServiceRequestModal')" class="btn-secondary">
+                            <i class="fas fa-times mr-2"></i> Hủy
+                        </button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save mr-2"></i> Lưu thay đổi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="importModal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+                <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-800">Nhập dữ liệu Phiếu yêu cầu</h2>
+                    <button onclick="hideImportModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="p-6 space-y-6">
+                    <div class="form-group">
+                        <label class="form-label">Chọn file Excel/CSV</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                            <input type="file" id="importFile" accept=".csv,.xlsx,.xls" class="hidden">
+                            <label for="importFile" class="cursor-pointer">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                                <p class="text-gray-600">Nhấp vào đây hoặc kéo file vào đây</p>
+                                <p class="text-sm text-gray-500">Hỗ trợ file CSV, Excel (.xlsx, .xls)</p>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Tùy chọn nhập</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="skipDuplicates" class="mr-2">
+                                <span>Bỏ qua các phiếu trùng lặp</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="validateData" class="mr-2">
+                                <span>Kiểm tra dữ liệu trước khi nhập</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Xem trước dữ liệu</label>
+                        <div id="importPreview" class="border border-gray-300 rounded-lg p-4 max-h-60 overflow-y-auto hidden">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-2 py-2 text-left">Mã phiếu</th>
+                                        <th class="px-2 py-2 text-left">Công ty</th>
+                                        <th class="px-2 py-2 text-left">Người liên hệ</th>
+                                        <th class="px-2 py-2 text-left">Điện thoại</th>
+                                        <th class="px-2 py-2 text-left">Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="importPreviewBody">
+                                    <!-- Preview data will be shown here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-4 pt-6 border-t">
+                        <button type="button" onclick="hideImportModal()" class="btn-secondary">
+                            <i class="fas fa-times mr-2"></i> Hủy
+                        </button>
+                        <button type="button" onclick="processImport()" class="btn-primary">
+                            <i class="fas fa-file-import mr-2"></i> Nhập dữ liệu
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    
+    <!-- App JavaScript -->
+    <script src="js/app.js"></script>
+</body>
+</html>

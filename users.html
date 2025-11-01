@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Users - Lưu Bký Thuật Nhập</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #7c3aed;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-bg: #1f2937;
+            --light-bg: #f9fafb;
+        }
+
+        body {
+            background: var(--light-bg);
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-inactive {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .role-admin {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .role-moderator {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+
+        .role-user {
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary-color);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 50;
+            max-width: 400px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-btn {
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            border-color: #e5e7eb;
+        }
+
+        .tab-content {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .permission-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .permission-checkbox:checked {
+            background-color: #4f46e5;
+            border-color: #4f46e5;
+        }
+    </style>
+</head>
+<body class="users-page">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <button onclick="window.location.href='app.html'" class="text-gray-500 hover:text-gray-700 mr-4">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </button>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-users text-white text-sm"></i>
+                        </div>
+                        <h1 class="text-xl font-bold text-gray-800">Quản lý Users</h1>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <button onclick="window.location.href='app.html'" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-home text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="p-6">
+        <!-- Tab Navigation -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-8">
+                <button id="usersTab" class="tab-btn py-2 px-1 border-b-2 border-indigo-500 font-medium text-sm text-indigo-600">
+                    <i class="fas fa-users mr-2"></i> Quản lý Users
+                </button>
+                <button id="createUserTab" class="tab-btn py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fas fa-user-plus mr-2"></i> Tạo User
+                </button>
+                <button id="permissionsTab" class="tab-btn py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fas fa-shield-alt mr-2"></i> Phân quyền
+                </button>
+            </nav>
+        </div>
+
+        <!-- Users Tab Content -->
+        <div id="usersTabContent" class="tab-content">
+            <!-- Action Buttons -->
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Danh sách Users</h3>
+                    <p class="text-sm text-gray-600">Quản lý và kiểm tra phiếu yêu cầu theo danh mục</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button id="checkLinksByCategoryBtn" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition">
+                        <i class="fas fa-search mr-2"></i> Kiểm tra Phiếu yêu cầu theo Danh mục
+                    </button>
+                    <button id="refreshUserStatsBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                        <i class="fas fa-sync-alt mr-2"></i> Làm mới Thống kê
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Tổng Users</p>
+                        <p id="totalUsers" class="text-3xl font-bold text-gray-800">0</p>
+                    </div>
+                    <i class="fas fa-users text-3xl text-blue-500"></i>
+                </div>
+            </div>
+            <div class="card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Admins</p>
+                        <p id="totalAdmins" class="text-3xl font-bold text-gray-800">0</p>
+                    </div>
+                    <i class="fas fa-user-shield text-3xl text-red-500"></i>
+                </div>
+            </div>
+            <div class="card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Active Users</p>
+                        <p id="activeUsers" class="text-3xl font-bold text-gray-800">0</p>
+                    </div>
+                    <i class="fas fa-user-check text-3xl text-green-500"></i>
+                </div>
+            </div>
+            <div class="card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">New Users (30 days)</p>
+                        <p id="newUsers" class="text-3xl font-bold text-gray-800">0</p>
+                    </div>
+                    <i class="fas fa-user-plus text-3xl text-purple-500"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Stats Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Tổng Phiếu yêu cầu</p>
+                        <p id="totalLinks" class="text-3xl font-bold text-gray-800">0</p>
+                    </div>
+                    <i class="fas fa-clipboard-list text-3xl text-blue-500"></i>
+                </div>
+            </div>
+            <div class="card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Đã xử lý</p>
+                        <p id="totalClicks" class="text-3xl font-bold text-gray-800">0</p>
+                    </div>
+                    <i class="fas fa-check-circle text-3xl text-green-500"></i>
+                </div>
+            </div>
+            <div class="card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Phiếu Chờ xử lý</p>
+                        <p id="totalBrokenLinks" class="text-3xl font-bold text-gray-800">0</p>
+                    </div>
+                    <i class="fas fa-clock text-3xl text-red-500"></i>
+                </div>
+            </div>
+            <div class="card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Trung bình/User</p>
+                        <p id="avgLinksPerUser" class="text-3xl font-bold text-gray-800">0</p>
+                    </div>
+                    <i class="fas fa-chart-line text-3xl text-indigo-500"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="card p-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <input type="text" id="userSearch" placeholder="Tìm kiếm user..." class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                <select id="roleFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Tất cả vai trò</option>
+                    <option value="admin">Admin</option>
+                    <option value="moderator">Moderator</option>
+                    <option value="user">User</option>
+                </select>
+                <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+                <select id="sortBy" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="newest">Mới nhất</option>
+                    <option value="oldest">Cũ nhất</option>
+                    <option value="name">Tên</option>
+                    <option value="lastLogin">Lần đăng nhập cuối</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vai trò</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phiếu yêu cầu & Thống kê</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tham gia</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Đăng nhập cuối</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center">
+                                <div class="loading-spinner mx-auto mb-4"></div>
+                                <p class="text-gray-500">Đang tải users...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        </div>
+
+        <!-- Create User Tab Content -->
+        <div id="createUserTabContent" class="tab-content hidden">
+            <div class="card p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-6">Tạo User Mới</h3>
+                
+                <form id="createUserForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                            <input type="email" id="newUserEmail" required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="user@example.com">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Họ tên *</label>
+                            <input type="text" id="newUserDisplayName" required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Nguyễn Văn A">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu *</label>
+                            <input type="password" id="newUserPassword" required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Tối thiểu 6 ký tự">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Xác nhận mật khẩu *</label>
+                            <input type="password" id="newUserPasswordConfirm" required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Nhập lại mật khẩu">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Vai trò *</label>
+                            <select id="newUserRole" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                <option value="user">User</option>
+                                <option value="moderator">Moderator</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
+                            <select id="newUserStatus"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Permission Selection based on Role -->
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-800 mb-4">Phân quyền cho User</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="perm_view" class="permission-checkbox" checked>
+                                <span class="text-sm">Xem Phiếu yêu cầu</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="perm_create" class="permission-checkbox" checked>
+                                <span class="text-sm">Tạo Phiếu yêu cầu</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="perm_edit" class="permission-checkbox" checked>
+                                <span class="text-sm">Sửa Phiếu yêu cầu</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="perm_edit_all" class="permission-checkbox">
+                                <span class="text-sm">Sửa Tất cả</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="perm_delete" class="permission-checkbox">
+                                <span class="text-sm">Xóa Phiếu yêu cầu</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="perm_manage_categories" class="permission-checkbox">
+                                <span class="text-sm">Quản lý Danh mục</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="perm_import_export" class="permission-checkbox" checked>
+                                <span class="text-sm">Nhập/Xuất</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="perm_manage_users" class="permission-checkbox">
+                                <span class="text-sm">Quản lý Users</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" id="resetCreateUserForm"
+                                class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                            <i class="fas fa-redo mr-2"></i> Reset
+                        </button>
+                        <button type="submit" id="submitCreateUser"
+                                class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                            <i class="fas fa-user-plus mr-2"></i> Tạo User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Permissions Tab Content -->
+        <div id="permissionsTabContent" class="tab-content hidden">
+            <!-- Permission Overview -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <div class="card p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Vai trò</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="role-badge role-admin">Admin</span>
+                            <span class="text-sm text-gray-600">Quyền truy cập đầy đủ</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="role-badge role-moderator">Moderator</span>
+                            <span class="text-sm text-gray-600">Quản lý nội dung</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="role-badge role-user">User</span>
+                            <span class="text-sm text-gray-600">Quyền truy cập cơ bản</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-6 lg:col-span-2">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Ma trận Phân quyền</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-left py-2">Quyền hạn</th>
+                                    <th class="text-center py-2">Người dùng</th>
+                                    <th class="text-center py-2">Điều phối viên</th>
+                                    <th class="text-center py-2">Quản trị viên</th>
+                                </tr>
+                            </thead>
+                            <tbody id="permissionMatrix">
+                                <tr class="border-b">
+                                    <td class="py-2">Xem Phiếu yêu cầu</td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="user" data-permission="view" checked></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="moderator" data-permission="view" checked></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="admin" data-permission="view" checked></td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2">Tạo Phiếu yêu cầu</td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="user" data-permission="create" checked></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="moderator" data-permission="create" checked></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="admin" data-permission="create" checked></td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2">Sửa Phiếu yêu cầu của mình</td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="user" data-permission="edit" checked></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="moderator" data-permission="edit" checked></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="admin" data-permission="edit" checked></td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2">Sửa Tất cả Phiếu yêu cầu</td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="user" data-permission="edit_all"></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="moderator" data-permission="edit_all" checked></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="admin" data-permission="edit_all" checked></td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2">Xóa Phiếu yêu cầu</td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="user" data-permission="delete"></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="moderator" data-permission="delete" checked></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="admin" data-permission="delete" checked></td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2">Quản lý Danh mục</td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="user" data-permission="manage_categories"></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="moderator" data-permission="manage_categories" checked></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="admin" data-permission="manage_categories" checked></td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2">Nhập/Xuất</td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="user" data-permission="import_export" checked></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="moderator" data-permission="import_export" checked></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="admin" data-permission="import_export" checked></td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2">Quản lý Người dùng</td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="user" data-permission="manage_users"></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="moderator" data-permission="manage_users"></td>
+                                    <td class="text-center"><input type="checkbox" class="permission-checkbox" data-role="admin" data-permission="manage_users" checked></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Save Button -->
+            <div class="flex justify-end">
+                <button id="savePermissionsBtn" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700">
+                    <i class="fas fa-save mr-2"></i> Lưu thay đổi
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add/Edit User Modal -->
+    <div id="userModal" class="modal">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="userModalTitle" class="text-lg font-semibold text-gray-800">Thêm User Mới</h3>
+                <button id="closeUserModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="userForm" class="space-y-4">
+                <input type="hidden" id="userId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                    <input type="email" id="userEmail" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Họ tên *</label>
+                    <input type="text" id="userDisplayName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Vai trò *</label>
+                    <select id="userRole" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="user">User</option>
+                        <option value="moderator">Moderator</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div id="passwordField">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu *</label>
+                    <input type="password" id="userPassword" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                    <select id="userStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="flex space-x-3">
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                        Lưu User
+                    </button>
+                    <button type="button" id="cancelUser" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400">
+                        Hủy
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCB9uARJMMaY-N6ikCRvOscgMNOCE5R0n4",
+            authDomain: "luubbkythuatnhap.firebaseapp.com",
+            projectId: "luubbkythuatnhap",
+            storageBucket: "luubbkythuatnhap.firebasestorage.app",
+            messagingSenderId: "914373130415",
+            appId: "1:914373130415:web:f2aad04a7138d43c6afc5a"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Secondary app instance for admin-managed user creation to avoid switching primary auth state
+        let secondaryApp = null;
+        try {
+            secondaryApp = firebase.apps?.find(a => a.name === 'Secondary') || firebase.initializeApp(firebaseConfig, 'Secondary');
+        } catch (e) {
+            // Fallback for environments without apps array
+            secondaryApp = firebase.initializeApp(firebaseConfig, 'Secondary');
+        }
+        const secondaryAuth = secondaryApp.auth();
+        // Do not persist secondary session
+        if (secondaryAuth && firebase?.auth?.Auth?.Persistence?.NONE) {
+            secondaryAuth.setPersistence(firebase.auth.Auth.Persistence.NONE).catch(() => {});
+        }
+
+        // Global variables
+        let currentUser = null;
+        let users = [];
+
+        // Utility functions
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastId = 'toast-' + Date.now();
+            
+            const bgColors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500',
+                info: 'bg-blue-500'
+            };
+
+            const toastHtml = `
+                <div id="${toastId}" class="bg-white rounded-lg shadow-lg p-4 mb-2 toast-item">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 ${bgColors[type]} rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info'} text-white"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-800">${message}</p>
+                        </div>
+                        <button onclick="document.getElementById('${toastId}').remove()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toast = document.getElementById(toastId);
+                if (toast) toast.remove();
+            }, 5000);
+        }
+
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Check authentication
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                
+                // Check if user is admin
+                try {
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        // Store user data in currentUser for later use
+                        currentUser = { ...user, ...userData };
+                        
+                        if (userData.role === 'admin') {
+                            await loadUsers();
+                            await updateUserStats();
+                        } else {
+                            showToast('Bạn không có quyền truy cập trang này', 'error');
+                            window.location.href = 'app.html';
+                        }
+                    } else {
+                        showToast('User profile not found', 'error');
+                        window.location.href = 'app.html';
+                    }
+                } catch (error) {
+                    console.error('Error checking user permissions:', error);
+                    window.location.href = 'app.html';
+                }
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Data loading functions
+        async function loadUsers() {
+            try {
+                const snapshot = await db.collection('users').get();
+                users = [];
+                snapshot.forEach(doc => {
+                    users.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Calculate service request counts and total processed for each user
+                await calculateUserLinkStats();
+                renderUsers();
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showToast('Lỗi tải users', 'error');
+            }
+        }
+
+        async function calculateUserLinkStats() {
+            try {
+                // Get all service requests to calculate statistics per user
+                const serviceRequestsSnapshot = await db.collection('serviceRequests').get();
+                const userStats = {};
+
+                // Initialize stats for all users
+                users.forEach(user => {
+                    userStats[user.id] = {
+                        linkCount: 0,
+                        totalClicks: 0
+                    };
+                });
+
+                // Calculate stats from service requests
+                serviceRequestsSnapshot.forEach(doc => {
+                    const requestData = doc.data();
+                    const userId = requestData.userId;
+
+                    if (userStats[userId]) {
+                        userStats[userId].linkCount++;
+                        // Count completed requests as "processed"
+                        if (requestData.status === 'completed') {
+                            userStats[userId].totalClicks++;
+                        }
+                    }
+                });
+
+                // Update users with calculated stats
+                users.forEach(user => {
+                    user.linkCount = userStats[user.id].linkCount;
+                    user.totalClicks = userStats[user.id].totalClicks;
+                });
+
+            } catch (error) {
+                console.error('Error calculating user service request stats:', error);
+                // Fallback: set default values
+                users.forEach(user => {
+                    user.linkCount = user.linkCount || 0;
+                    user.totalClicks = user.totalClicks || 0;
+                });
+            }
+        }
+
+        async function updateUserStats() {
+            const totalUsers = users.length;
+            const totalAdmins = users.filter(u => u.role === 'admin').length;
+            const activeUsers = users.filter(u => u.isActive === true).length;
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const newUsers = users.filter(u => u.createdAt && u.createdAt.toDate() > thirtyDaysAgo).length;
+
+            // Calculate total service requests and processed across all users
+            const totalLinks = users.reduce((sum, user) => sum + (user.linkCount || 0), 0);
+            const totalClicks = users.reduce((sum, user) => sum + (user.totalClicks || 0), 0);
+            const avgLinksPerUser = totalUsers > 0 ? Math.round(totalLinks / totalUsers) : 0;
+
+            // Calculate total pending service requests across all users
+            let totalBrokenLinks = 0;
+            try {
+                const serviceRequestsSnapshot = await db.collection('serviceRequests').where('status', '==', 'pending').get();
+                totalBrokenLinks = serviceRequestsSnapshot.size;
+            } catch (error) {
+                console.error('Error calculating pending requests:', error);
+                totalBrokenLinks = 0;
+            }
+
+            document.getElementById('totalUsers').textContent = totalUsers;
+            document.getElementById('totalAdmins').textContent = totalAdmins;
+            document.getElementById('activeUsers').textContent = activeUsers;
+            document.getElementById('newUsers').textContent = newUsers;
+
+            // Update additional stats if elements exist
+            const totalLinksEl = document.getElementById('totalLinks');
+            const totalClicksEl = document.getElementById('totalClicks');
+            const totalBrokenLinksEl = document.getElementById('totalBrokenLinks');
+            const avgLinksPerUserEl = document.getElementById('avgLinksPerUser');
+
+            if (totalLinksEl) totalLinksEl.textContent = totalLinks;
+            if (totalClicksEl) totalClicksEl.textContent = totalClicks;
+            if (totalBrokenLinksEl) totalBrokenLinksEl.textContent = totalBrokenLinks;
+            if (avgLinksPerUserEl) avgLinksPerUserEl.textContent = avgLinksPerUser;
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const roleFilter = document.getElementById('roleFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+
+            let filteredUsers = users.filter(user => {
+                const matchesSearch = !searchTerm ||
+                    user.displayName.toLowerCase().includes(searchTerm) ||
+                    user.email.toLowerCase().includes(searchTerm);
+
+                const matchesRole = !roleFilter || user.role === roleFilter;
+                const matchesStatus = !statusFilter ||
+                    (statusFilter === 'active' && user.isActive === true) ||
+                    (statusFilter === 'inactive' && user.isActive === false);
+
+                return matchesSearch && matchesRole && matchesStatus;
+            });
+
+            // Sort users
+            filteredUsers.sort((a, b) => {
+                switch (sortBy) {
+                    case 'oldest':
+                        return new Date(a.createdAt) - new Date(b.createdAt);
+                    case 'name':
+                        return a.displayName.localeCompare(b.displayName);
+                    case 'lastLogin':
+                        return new Date(b.lastLogin || 0) - new Date(a.lastLogin || 0);
+                    default: // newest
+                        return new Date(b.createdAt) - new Date(a.createdAt);
+                }
+            });
+
+            if (filteredUsers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <i class="fas fa-users text-4xl mb-2"></i>
+                            <p>Không tìm thấy user nào</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const usersHtml = filteredUsers.map(user => {
+                const roleClass = `role-${user.role}`;
+                const statusClass = user.isActive === true ? 'status-active' : 'status-inactive';
+                const roleText = user.role === 'admin' ? 'Admin' : user.role === 'moderator' ? 'Moderator' : 'User';
+                const statusText = user.isActive === true ? 'Active' : 'Inactive';
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <img class="h-10 w-10 rounded-full" src="${user.photoURL || `https://picsum.photos/seed/${user.id}/40/40.jpg`}" alt="">
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">${user.displayName}</div>
+                                    <div class="text-sm text-gray-500">${user.email}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="badge ${roleClass}">${roleText}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="badge ${statusClass}">${statusText}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div>${user.linkCount || 0} phiếu yêu cầu</div>
+                            <div class="text-xs text-gray-400">${user.totalClicks || 0} đã xử lý</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${user.createdAt ? new Date(user.createdAt.toDate()).toLocaleDateString('vi-VN') : 'N/A'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${user.lastLogin ? new Date(user.lastLogin.toDate()).toLocaleDateString('vi-VN') : 'Chưa đăng nhập'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="editUser('${user.id}')" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="resetPassword('${user.id}')" class="text-yellow-600 hover:text-yellow-900 mr-3">
+                                <i class="fas fa-key"></i>
+                            </button>
+                            ${user.id !== currentUser.uid ? `
+                                <button onclick="deleteUser('${user.id}')" class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            tbody.innerHTML = usersHtml;
+        }
+
+        // User management functions
+        async function createUser(userData) {
+            try {
+                console.log('Creating user with data:', userData);
+                
+                // Create user in Firebase Auth
+                const userCredential = await secondaryAuth.createUserWithEmailAndPassword(
+                    userData.email,
+                    userData.password
+                );
+                const user = userCredential.user;
+                console.log('User created in Firebase Auth:', user.uid);
+                
+                // Update profile
+                await user.updateProfile({ displayName: userData.displayName });
+                console.log('Profile updated');
+                
+                // Create user document in Firestore với đầy đủ các trường theo yêu cầu
+                const rolePermissions = getPermissionsForRole(userData.role);
+                const permissionList = Object.keys(rolePermissions).filter(key => rolePermissions[key]);
+
+                const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+                const newUserDoc = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: userData.displayName,
+                    photoURL: '',
+                    role: userData.role,
+                    permissions: permissionList,
+                    isActive: userData.status === 'active',
+                    isOnline: false,
+                    createdAt: serverTimestamp,
+                    updatedAt: serverTimestamp,
+                    lastLoginAt: serverTimestamp,
+                    lastLogin: serverTimestamp,
+                    lastSeen: serverTimestamp,
+                    settings: {
+                        theme: 'light',
+                        linksPerPage: 20,
+                        defaultView: 'grid',
+                        autoCheckInterval: 300000
+                    }
+                };
+
+                // Fix for createdAt.toDate() error - ensure proper timestamp handling
+                try {
+                    await db.collection('users').doc(user.uid).set(newUserDoc);
+                } catch (firestoreError) {
+                    console.error('Firestore error:', firestoreError);
+                    throw new Error('Không thể tạo tài liệu user trong Firestore');
+                }
+                
+                console.log('Creating Firestore document with data:', newUserDoc);
+                await db.collection('users').doc(user.uid).set(newUserDoc);
+                console.log('Firestore document created successfully');
+                
+                // Send password reset email
+                try {
+                    await auth.sendPasswordResetEmail(userData.email);
+                    console.log('Password reset email sent');
+                    showToast('User đã được tạo thành công! Email reset password đã được gửi.', 'success');
+                } catch (emailError) {
+                    console.error('Error sending password reset email:', emailError);
+                    showToast('User đã được tạo thành công nhưng không gửi được email reset password.', 'warning');
+                }
+                
+                // Add to local array
+                users.push({ id: user.uid, ...newUserDoc });
+                
+                // Sign out secondary session (keep admin signed-in on primary app)
+                try { await secondaryAuth.signOut(); } catch (e) {}
+                
+                renderUsers();
+                updateUserStats();
+                hideModal('userModal');
+            } catch (error) {
+                console.error('Error creating user:', error);
+                console.error('Error code:', error.code);
+                console.error('Error message:', error.message);
+                
+                // Handle specific errors
+                if (error.code === 'auth/email-already-in-use') {
+                    showToast('Email này đã được sử dụng', 'error');
+                } else if (error.code === 'auth/weak-password') {
+                    showToast('Mật khẩu quá yếu (tối thiểu 6 ký tự)', 'error');
+                } else if (error.code === 'permission-denied' || error.message.includes('Missing or insufficient permissions')) {
+                    showToast('Lỗi phân quyền: Admin không có quyền tạo user. Vui lòng kiểm tra Firestore rules.', 'error');
+                } else {
+                    showToast('Lỗi tạo user: ' + error.message, 'error');
+                }
+            }
+        }
+
+        function getPermissionsForRole(role) {
+            switch (role) {
+                case 'admin':
+                    return {
+                        view: true,
+                        create: true,
+                        edit: true,
+                        delete: true,
+                        manage_users: true,
+                        manage_requests: true
+                    };
+                case 'moderator':
+                    return {
+                        view: true,
+                        create: true,
+                        edit: true,
+                        delete: false,
+                        manage_users: false,
+                        manage_requests: true
+                    };
+                default: // user
+                    return {
+                        view: true,
+                        create: true,
+                        edit: true,
+                        delete: false,
+                        manage_users: false,
+                        manage_requests: false
+                    };
+            }
+        }
+
+        // User management functions
+        async function updateUser(userId, userData) {
+            try {
+                // Convert status to isActive for Firestore
+                const rolePermissions = getPermissionsForRole(userData.role);
+                const permissionList = Object.keys(rolePermissions).filter(key => rolePermissions[key]);
+                
+                const updateData = {
+                    ...userData,
+                    isActive: userData.status === 'active',
+                    permissions: permissionList,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                delete updateData.status; // Remove status field as we use isActive
+
+                await db.collection('users').doc(userId).update(updateData);
+
+                // Update local array
+                const index = users.findIndex(u => u.id === userId);
+                if (index !== -1) {
+                    users[index] = { ...users[index], ...updateData };
+                }
+
+                renderUsers();
+                updateUserStats();
+                showToast('User đã được cập nhật!', 'success');
+                hideModal('userModal');
+            } catch (error) {
+                console.error('Error updating user:', error);
+                showToast('Lỗi cập nhật user: ' + error.message, 'error');
+            }
+        }
+
+        async function resetPassword(userId) {
+            // Double check if current user is admin
+            if (!currentUser || currentUser.role !== 'admin') {
+                showToast('Chỉ admin mới có quyền reset password', 'error');
+                return;
+            }
+            
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+
+            if (!confirm(`Reset password cho user "${user.displayName}"?`)) return;
+
+            try {
+                // Send password reset email
+                await auth.sendPasswordResetEmail(user.email);
+                showToast('Password reset email đã được gửi!', 'success');
+            } catch (error) {
+                console.error('Error resetting password:', error);
+                showToast('Lỗi reset password: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteUser(userId) {
+            // Double check if current user is admin
+            if (!currentUser || currentUser.role !== 'admin') {
+                showToast('Chỉ admin mới có quyền xóa user', 'error');
+                return;
+            }
+            
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+
+            if (user.id === currentUser.uid) {
+                showToast('Không thể xóa chính mình', 'error');
+                return;
+            }
+
+            if (!confirm(`Bạn có chắc muốn xóa user "${user.displayName}"?`)) return;
+
+            try {
+                await db.collection('users').doc(userId).delete();
+                
+                // Remove from local array
+                users = users.filter(u => u.id !== userId);
+                
+                renderUsers();
+                updateUserStats();
+                showToast('User đã được xóa', 'success');
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showToast('Lỗi xóa user', 'error');
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // User modal functionality removed - no longer creating users
+
+            document.getElementById('closeUserModal').addEventListener('click', () => hideModal('userModal'));
+            document.getElementById('cancelUser').addEventListener('click', () => hideModal('userModal'));
+
+            // User form - only for editing existing users
+            document.getElementById('userForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Double check if current user is admin
+                if (!currentUser || currentUser.role !== 'admin') {
+                    showToast('Chỉ admin mới có quyền thay đổi thông tin user', 'error');
+                    return;
+                }
+                
+                const userId = document.getElementById('userId').value;
+                
+                // Only allow updating existing users, not creating new ones
+                if (userId) {
+                    const userData = {
+                        displayName: document.getElementById('userDisplayName').value,
+                        email: document.getElementById('userEmail').value,
+                        role: document.getElementById('userRole').value,
+                        status: document.getElementById('userStatus').value
+                    };
+                    await updateUser(userId, userData);
+                } else {
+                    showToast('Tạo user mới đã bị vô hiệu hóa', 'error');
+                    hideModal('userModal');
+                }
+            });
+
+            // Search and filters
+            document.getElementById('userSearch').addEventListener('input', renderUsers);
+            document.getElementById('roleFilter').addEventListener('change', renderUsers);
+            document.getElementById('statusFilter').addEventListener('change', renderUsers);
+            document.getElementById('sortBy').addEventListener('change', renderUsers);
+            
+            // Tab switching
+            document.getElementById('usersTab').addEventListener('click', () => switchTab('users'));
+            document.getElementById('createUserTab').addEventListener('click', () => switchTab('createUser'));
+            document.getElementById('permissionsTab').addEventListener('click', () => switchTab('permissions'));
+            
+            // Create user form
+            document.getElementById('createUserForm').addEventListener('submit', handleCreateUser);
+            document.getElementById('resetCreateUserForm').addEventListener('click', () => {
+                document.getElementById('createUserForm').reset();
+                setDefaultPermissions('user');
+            });
+
+            // New action buttons
+            document.getElementById('checkLinksByCategoryBtn').addEventListener('click', checkLinksByCategory);
+            document.getElementById('refreshUserStatsBtn').addEventListener('click', refreshUserStats);
+            
+            // Role change handler for create user form
+            document.getElementById('newUserRole').addEventListener('change', function() {
+                setDefaultPermissions(this.value);
+            });
+            
+            // Save permissions
+            document.getElementById('savePermissionsBtn').addEventListener('click', savePermissions);
+            
+            // Permission checkbox change handlers
+            document.querySelectorAll('.permission-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    // If admin has a permission, ensure moderator and user can have it too (optional logic)
+                    // This can be customized based on your requirements
+                });
+            });
+        });
+
+        // Global functions for inline event handlers
+        window.editUser = function(userId) {
+            // Double check if current user is admin
+            if (!currentUser || currentUser.role !== 'admin') {
+                showToast('Chỉ admin mới có quyền chỉnh sửa user', 'error');
+                return;
+            }
+            
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+
+            // Populate edit form
+            document.getElementById('userId').value = user.id;
+            document.getElementById('userEmail').value = user.email;
+            document.getElementById('userDisplayName').value = user.displayName;
+            document.getElementById('userRole').value = user.role;
+            document.getElementById('userStatus').value = user.isActive === true ? 'active' : 'inactive';
+            
+            // Hide password field for editing
+            document.getElementById('passwordField').style.display = 'none';
+            document.getElementById('userPassword').required = false;
+
+            document.getElementById('userModalTitle').textContent = 'Chỉnh sửa User';
+            showModal('userModal');
+        };
+
+        window.resetPassword = resetPassword;
+        window.deleteUser = deleteUser;
+        
+        // Tab switching function
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.getElementById('usersTabContent').style.display = 'none';
+            document.getElementById('createUserTabContent').style.display = 'none';
+            document.getElementById('permissionsTabContent').style.display = 'none';
+            
+            // Remove active class from all tabs
+            document.getElementById('usersTab').classList.remove('active');
+            document.getElementById('createUserTab').classList.remove('active');
+            document.getElementById('permissionsTab').classList.remove('active');
+            
+            // Show selected tab and add active class
+            if (tabName === 'users') {
+                document.getElementById('usersTabContent').style.display = 'block';
+                document.getElementById('usersTab').classList.add('active');
+            } else if (tabName === 'createUser') {
+                document.getElementById('createUserTabContent').style.display = 'block';
+                document.getElementById('createUserTab').classList.add('active');
+                // Initialize create user form
+                document.getElementById('createUserForm').reset();
+                setDefaultPermissions('user');
+            } else if (tabName === 'permissions') {
+                document.getElementById('permissionsTabContent').style.display = 'block';
+                document.getElementById('permissionsTab').classList.add('active');
+                loadPermissionSettings();
+            }
+        }
+        
+        // Load permission settings
+        function loadPermissionSettings() {
+            // This would load current permission settings from Firebase
+            // For now, we'll use the default values in the HTML
+        }
+        
+        // Save permissions
+        function savePermissions() {
+            const permissions = {};
+            
+            // Collect all permission settings
+            document.querySelectorAll('.permission-checkbox').forEach(checkbox => {
+                permissions[checkbox.id] = checkbox.checked;
+            });
+            
+            // Save to Firebase (this would need to be implemented)
+            // For now, just show a success message
+            alert('Cài đặt phân quyền đã được lưu thành công!');
+        }
+        
+        // Set default permissions based on role
+        function setDefaultPermissions(role) {
+            // Reset all checkboxes
+            document.querySelectorAll('#createUserTabContent .permission-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Set permissions based on role
+            switch(role) {
+                case 'admin':
+                    document.getElementById('perm_view').checked = true;
+                    document.getElementById('perm_create').checked = true;
+                    document.getElementById('perm_edit').checked = true;
+                    document.getElementById('perm_edit_all').checked = true;
+                    document.getElementById('perm_delete').checked = true;
+                    document.getElementById('perm_manage_categories').checked = true;
+                    document.getElementById('perm_import_export').checked = true;
+                    document.getElementById('perm_manage_users').checked = true;
+                    break;
+                case 'moderator':
+                    document.getElementById('perm_view').checked = true;
+                    document.getElementById('perm_create').checked = true;
+                    document.getElementById('perm_edit').checked = true;
+                    document.getElementById('perm_edit_all').checked = true;
+                    document.getElementById('perm_delete').checked = true;
+                    document.getElementById('perm_manage_categories').checked = true;
+                    document.getElementById('perm_import_export').checked = true;
+                    document.getElementById('perm_manage_users').checked = false;
+                    break;
+                default: // user
+                    document.getElementById('perm_view').checked = true;
+                    document.getElementById('perm_create').checked = true;
+                    document.getElementById('perm_edit').checked = true;
+                    document.getElementById('perm_edit_all').checked = false;
+                    document.getElementById('perm_delete').checked = false;
+                    document.getElementById('perm_manage_categories').checked = false;
+                    document.getElementById('perm_import_export').checked = true;
+                    document.getElementById('perm_manage_users').checked = false;
+            }
+        }
+        
+        // New functions for category-based service request checking
+        async function checkLinksByCategory() {
+            try {
+                // Get all categories
+                const categoriesSnapshot = await db.collection('categories').get();
+                const categories = [];
+                categoriesSnapshot.forEach(doc => {
+                    categories.push({ id: doc.id, ...doc.data() });
+                });
+
+                if (categories.length === 0) {
+                    showToast('Không có danh mục nào để kiểm tra', 'warning');
+                    return;
+                }
+
+                showToast('Bắt đầu kiểm tra phiếu yêu cầu theo danh mục...', 'info');
+
+                let totalChecked = 0;
+                let totalPending = 0;
+                const results = [];
+
+                for (const category of categories) {
+                    // Get service requests for this category (if they have categories)
+                    const requestsSnapshot = await db.collection('serviceRequests')
+                        .where('status', '==', 'pending')
+                        .get();
+
+                    const categoryRequests = [];
+                    requestsSnapshot.forEach(doc => {
+                        categoryRequests.push({ id: doc.id, ...doc.data() });
+                    });
+
+                    if (categoryRequests.length === 0) continue;
+
+                    let categoryPending = categoryRequests.length;
+
+                    results.push({
+                        categoryName: category.name,
+                        totalRequests: categoryRequests.length,
+                        pendingRequests: categoryPending
+                    });
+
+                    totalChecked += categoryRequests.length;
+                    totalPending += categoryPending;
+                }
+
+                // Show results
+                let resultMessage = `Kiểm tra hoàn tất! Tổng: ${totalChecked} phiếu yêu cầu, Chờ xử lý: ${totalPending}\n\n`;
+                results.forEach(result => {
+                    resultMessage += `${result.categoryName}: ${result.totalRequests} phiếu, ${result.pendingRequests} chờ xử lý\n`;
+                });
+
+                showToast(resultMessage, totalPending > 0 ? 'warning' : 'success');
+
+                // Refresh user stats and UI
+                await loadUsers();
+                await updateUserStats();
+
+            } catch (error) {
+                console.error('Error checking service requests by category:', error);
+                showToast('Lỗi kiểm tra phiếu yêu cầu theo danh mục', 'error');
+            }
+        }
+
+        async function refreshUserStats() {
+            try {
+                showToast('Đang làm mới thống kê...', 'info');
+                await loadUsers();
+                await updateUserStats();
+                showToast('Thống kê đã được cập nhật!', 'success');
+            } catch (error) {
+                console.error('Error refreshing user stats:', error);
+                showToast('Lỗi làm mới thống kê', 'error');
+            }
+        }
+
+        // Handle create user form submission
+        async function handleCreateUser(e) {
+            e.preventDefault();
+            
+            // Double check if current user is admin
+            if (!currentUser || currentUser.role !== 'admin') {
+                showToast('Chỉ admin mới có quyền tạo user', 'error');
+                return;
+            }
+            
+            const email = document.getElementById('newUserEmail').value.trim();
+            const displayName = document.getElementById('newUserDisplayName').value.trim();
+            const password = document.getElementById('newUserPassword').value;
+            const passwordConfirm = document.getElementById('newUserPasswordConfirm').value;
+            const role = document.getElementById('newUserRole').value;
+            const status = document.getElementById('newUserStatus').value;
+            
+            // Validation
+            if (!email || !displayName || !password || !passwordConfirm) {
+                showToast('Vui lòng nhập đầy đủ thông tin', 'error');
+                return;
+            }
+            
+            if (password !== passwordConfirm) {
+                showToast('Mật khẩu không khớp', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showToast('Mật khẩu phải có ít nhất 6 ký tự', 'error');
+                return;
+            }
+            
+            // Collect permissions
+            const permissions = [];
+            document.querySelectorAll('#createUserTabContent .permission-checkbox:checked').forEach(checkbox => {
+                permissions.push(checkbox.id.replace('perm_', ''));
+            });
+            
+            // Disable submit button
+            const submitBtn = document.getElementById('submitCreateUser');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="loading-spinner inline-block w-4 h-4 mr-2"></div> Đang tạo...';
+            
+            try {
+                // Create user in Firebase Auth
+                const userCredential = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Update profile on secondary session
+                await user.updateProfile({ displayName: displayName });
+                
+                // Create user document in Firestore
+                const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp();
+                const userData = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: displayName,
+                    photoURL: '',
+                    role: role,
+                    permissions: permissions,
+                    isActive: status === 'active',
+                    isOnline: false,
+                    createdAt: serverTimestamp,
+                    updatedAt: serverTimestamp,
+                    lastLoginAt: serverTimestamp,
+                    lastLogin: serverTimestamp,
+                    lastSeen: serverTimestamp,
+                    settings: {
+                        theme: 'light',
+                        linksPerPage: 20,
+                        defaultView: 'grid',
+                        autoCheckInterval: 300000
+                    }
+                };
+
+                // Fix for createdAt.toDate() error - ensure proper timestamp handling
+                try {
+                    await db.collection('users').doc(user.uid).set(userData);
+                } catch (firestoreError) {
+                    console.error('Firestore error:', firestoreError);
+                    throw new Error('Không thể tạo tài liệu user trong Firestore');
+                }
+                
+                // Send password reset email
+                try {
+                    await auth.sendPasswordResetEmail(email);
+                    showToast('User đã được tạo thành công! Email reset password đã được gửi.', 'success');
+                } catch (emailError) {
+                    console.error('Error sending password reset email:', emailError);
+                    showToast('User đã được tạo thành công nhưng không gửi được email reset password.', 'warning');
+                }
+                
+                // Add to local array
+                users.push({ id: user.uid, ...userData });
+                
+                // Sign out secondary session (keep admin signed-in on primary app)
+                try { await secondaryAuth.signOut(); } catch (e) {}
+                
+                // Reset form and switch to users tab
+                document.getElementById('createUserForm').reset();
+                setDefaultPermissions('user');
+                switchTab('users');
+                
+                renderUsers();
+                updateUserStats();
+                
+            } catch (error) {
+                console.error('Error creating user:', error);
+                
+                // Handle specific errors
+                if (error.code === 'auth/email-already-in-use') {
+                    showToast('Email này đã được sử dụng', 'error');
+                } else if (error.code === 'auth/weak-password') {
+                    showToast('Mật khẩu quá yếu (tối thiểu 6 ký tự)', 'error');
+                } else if (error.code === 'permission-denied' || error.message.includes('Missing or insufficient permissions')) {
+                    showToast('Lỗi phân quyền: Admin không có quyền tạo user. Vui lòng kiểm tra Firestore rules.', 'error');
+                } else {
+                    showToast('Lỗi tạo user: ' + error.message, 'error');
+                }
+            } finally {
+                // Restore button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+    </script>
+</body>
+</html>
