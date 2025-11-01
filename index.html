@@ -511,33 +511,7 @@
                 }
             });
 
-            document.getElementById('confirmPassword').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('registerForm').dispatchEvent(new Event('submit'));
-                }
-            });
 
-            // Forgot password link
-            document.querySelector('a[href="#"]').addEventListener('click', function(e) {
-                if (e.target.textContent.includes('Quên mật khẩu')) {
-                    e.preventDefault();
-                    const email = document.getElementById('email').value.trim();
-                    
-                    if (!email) {
-                        showToast('Vui lòng nhập email của bạn', '', 'warning');
-                        document.getElementById('email').focus();
-                        return;
-                    }
-
-                    auth.sendPasswordResetEmail(email)
-                        .then(() => {
-                            showToast('Email đặt lại mật khẩu đã được gửi', 'Vui lòng kiểm tra hòm thư', 'success');
-                        })
-                        .catch((error) => {
-                            showToast('Gửi email thất bại', error.message, 'error');
-                        });
-                }
-            });
         });
 
         // Handle page visibility change

@@ -203,11 +203,11 @@
 
                         <!-- Company Information -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                            <div class="form-group">
+                            <div class="form-group company-info">
                                 <label class="form-label">Tên công ty</label>
                                 <input type="text" id="companyName" class="form-input">
                             </div>
-                            <div class="form-group">
+                            <div class="form-group company-info">
                                 <label class="form-label">Địa chỉ</label>
                                 <input type="text" id="address" class="form-input" required>
                             </div>
@@ -215,11 +215,11 @@
 
                         <!-- Contact Information -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                            <div class="form-group">
+                            <div class="form-group contact-info">
                                 <label class="form-label">Người liên hệ</label>
                                 <input type="text" id="contactPerson" class="form-input" required>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group contact-info">
                                 <label class="form-label">Điện thoại</label>
                                 <input type="tel" id="phone" class="form-input" required>
                             </div>
@@ -227,27 +227,27 @@
 
                         <!-- Product Information -->
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                            <div class="form-group">
+                            <div class="form-group product-info">
                                 <label class="form-label">Mã hàng</label>
                                 <input type="text" id="productCode" class="form-input">
                             </div>
-                            <div class="form-group">
+                            <div class="form-group product-info">
                                 <label class="form-label">Số máy</label>
                                 <input type="text" id="machineNumber" class="form-input">
                             </div>
-                            <div class="form-group">
+                            <div class="form-group product-info">
                                 <label class="form-label">Mã số đơn hàng</label>
                                 <input type="text" id="orderNumber" class="form-input">
                             </div>
-                            <div class="form-group">
+                            <div class="form-group product-info">
                                 <label class="form-label">Model</label>
                                 <input type="text" id="model" class="form-input">
                             </div>
-                            <div class="form-group">
+                            <div class="form-group product-info">
                                 <label class="form-label">Số hiệu</label>
                                 <input type="text" id="serialNumber" class="form-input">
                             </div>
-                            <div class="form-group">
+                            <div class="form-group product-info">
                                 <label class="form-label">Hãng sản xuất</label>
                                 <input type="text" id="manufacturer" class="form-input">
                             </div>
@@ -255,18 +255,18 @@
 
                         <!-- Product Description -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                            <div class="form-group">
+                            <div class="form-group product-description">
                                 <label class="form-label">Mô tả hàng hoá</label>
                                 <textarea id="productDescription" class="form-input form-textarea"></textarea>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group product-description">
                                 <label class="form-label">Mô tả tình trạng</label>
                                 <textarea id="problemDescription" class="form-input form-textarea" placeholder="Mô tả chi tiết tình trạng thiết bị..."></textarea>
                             </div>
                         </div>
 
                         <!-- Service Types -->
-                        <div class="form-group">
+                        <div class="form-group service-types">
                             <label class="form-label">Loại dịch vụ</label>
                             <div class="checkbox-group">
                                 <label class="checkbox-item">
@@ -296,8 +296,52 @@
                             </div>
                         </div>
 
+                        <!-- Problem Definition -->
+                        <div class="form-group problem-definition">
+                            <label class="form-label">Problem definition</label>
+                            <textarea id="problemDefinition" class="form-input form-textarea" placeholder="Định nghĩa vấn đề cần giải quyết..."></textarea>
+                        </div>
+
+                        <!-- Service Completed -->
+                        <div class="form-group service-completed">
+                            <label class="form-label">Dịch vụ đã hoàn thành & Diễn giải chi tiết dịch vụ</label>
+                            <textarea id="serviceCompleted" class="form-input form-textarea" placeholder="Mô tả chi tiết dịch vụ đã hoàn thành..." style="min-height: 120px;"></textarea>
+                        </div>
+
+                        <!-- Time Information -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                            <div class="form-group time-info">
+                                <label class="form-label">Thời gian bắt đầu</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="date" id="startDate" class="form-input">
+                                    <input type="time" id="startTime" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-group time-info">
+                                <label class="form-label">Thời gian kết thúc</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="date" id="endDate" class="form-input">
+                                    <input type="time" id="endTime" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-group time-info">
+                                <label class="form-label">Tổng thời gian - Ngày</label>
+                                <input type="text" id="totalDate" class="form-input" placeholder="Số ngày">
+                            </div>
+                            <div class="form-group time-info">
+                                <label class="form-label">Tổng thời gian - Giờ</label>
+                                <input type="text" id="totalTime" class="form-input" placeholder="Số giờ">
+                            </div>
+                        </div>
+
+                        <!-- Travel Information -->
+                        <div class="form-group travel-info">
+                            <label class="form-label">Thời gian di chuyển tới khách hàng và khoảng cách</label>
+                            <input type="text" id="travelInfo" class="form-input" placeholder="Thời gian di chuyển và khoảng cách...">
+                        </div>
+
                         <!-- Notes -->
-                        <div class="form-group">
+                        <div class="form-group notes">
                             <label class="form-label">Ghi chú</label>
                             <textarea id="notes" class="form-input form-textarea" placeholder="Thiết bị hoạt động ổn định, đường chuẩn vẫn còn áp dụng được với các mẫu phân tích hiện tại"></textarea>
                         </div>

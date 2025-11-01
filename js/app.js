@@ -345,52 +345,91 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Sidebar toggle
-    document.getElementById('sidebarToggle').addEventListener('click', function() {
-        const sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('open');
-    });
-
-    // User menu
-    document.getElementById('userMenuBtn').addEventListener('click', function() {
-        document.getElementById('userDropdown').classList.toggle('hidden');
-    });
-
-    // Logout
-    document.getElementById('logoutBtn').addEventListener('click', async function() {
-        try {
-            await auth.signOut();
-            window.location.href = 'index.html';
-        } catch (error) {
-            console.error('Logout error:', error);
-            showToast('Lỗi đăng xuất', 'error');
-        }
-    });
-
-    // Navigation
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', function() {
-            const section = this.dataset.section;
-            console.log('Nav item clicked, section:', section);
-            if (section) {
-                showSection(section);
-                // Close sidebar on mobile after navigation
-                if (window.innerWidth <= 1023) {
-                    document.getElementById('sidebar').classList.remove('open');
-                }
-            } else {
-                console.warn('No section found on nav item:', this);
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('open');
             }
         });
-    });
+    }
+
+    // User menu
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    if (userMenuBtn) {
+        userMenuBtn.addEventListener('click', function() {
+            const userDropdown = document.getElementById('userDropdown');
+            if (userDropdown) {
+                userDropdown.classList.toggle('hidden');
+            }
+        });
+    }
+
+    // Logout
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function() {
+            try {
+                await auth.signOut();
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                showToast('Lỗi đăng xuất', 'error');
+            }
+        });
+    }
+
+    // Navigation
+    const navItems = document.querySelectorAll('.nav-item');
+    if (navItems.length > 0) {
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const section = this.dataset.section;
+                console.log('Nav item clicked, section:', section);
+                if (section) {
+                    showSection(section);
+                    // Close sidebar on mobile after navigation
+                    if (window.innerWidth <= 1023) {
+                        const sidebar = document.getElementById('sidebar');
+                        if (sidebar) {
+                            sidebar.classList.remove('open');
+                        }
+                    }
+                } else {
+                    console.warn('No section found on nav item:', this);
+                }
+            });
+        });
+    }
 
     // Service request actions with debouncing
     const debouncedRender = debounce(renderServiceRequests, 300);
 
-    document.getElementById('serviceRequestSearch')?.addEventListener('input', debouncedRender);
-    document.getElementById('serviceRequestStatus')?.addEventListener('change', renderServiceRequests);
-    document.getElementById('serviceRequestUser')?.addEventListener('change', renderServiceRequests);
-    document.getElementById('serviceRequestDateFrom')?.addEventListener('change', renderServiceRequests);
-    document.getElementById('serviceRequestDateTo')?.addEventListener('change', renderServiceRequests);
+    const serviceRequestSearch = document.getElementById('serviceRequestSearch');
+    if (serviceRequestSearch) {
+        serviceRequestSearch.addEventListener('input', debouncedRender);
+    }
+    
+    const serviceRequestStatus = document.getElementById('serviceRequestStatus');
+    if (serviceRequestStatus) {
+        serviceRequestStatus.addEventListener('change', renderServiceRequests);
+    }
+    
+    const serviceRequestUser = document.getElementById('serviceRequestUser');
+    if (serviceRequestUser) {
+        serviceRequestUser.addEventListener('change', renderServiceRequests);
+    }
+    
+    const serviceRequestDateFrom = document.getElementById('serviceRequestDateFrom');
+    if (serviceRequestDateFrom) {
+        serviceRequestDateFrom.addEventListener('change', renderServiceRequests);
+    }
+    
+    const serviceRequestDateTo = document.getElementById('serviceRequestDateTo');
+    if (serviceRequestDateTo) {
+        serviceRequestDateTo.addEventListener('change', renderServiceRequests);
+    }
 
     // Load service requests when service-requests section is shown
     const serviceRequestsSection = document.getElementById('linksSection');
@@ -448,12 +487,16 @@ async function loadAllUsers() {
 
     // Close dropdowns when clicking outside
     document.addEventListener('click', function(e) {
-        if (!e.target.closest('#userMenuBtn') && !e.target.closest('#userDropdown')) {
-            document.getElementById('userDropdown').classList.add('hidden');
+        const userDropdown = document.getElementById('userDropdown');
+        if (userDropdown && !e.target.closest('#userMenuBtn') && !e.target.closest('#userDropdown')) {
+            userDropdown.classList.add('hidden');
         }
 
         if (window.innerWidth <= 1023 && !e.target.closest('#sidebar') && !e.target.closest('#sidebarToggle')) {
-            document.getElementById('sidebar').classList.remove('open');
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.remove('open');
+            }
         }
     });
     
@@ -492,24 +535,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Also add event listener when modal is shown
 document.addEventListener('DOMContentLoaded', function() {
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                const modal = document.getElementById('editServiceRequestModal');
-                if (modal && modal.classList.contains('active')) {
-                    const editForm = document.getElementById('editServiceRequestForm');
-                    if (editForm && !editForm.hasAttribute('data-listener-added')) {
-                        editForm.addEventListener('submit', handleEditServiceRequestSubmit);
-                        editForm.setAttribute('data-listener-added', 'true');
-                        console.log('Added submit listener to edit form in modal');
-                    }
-                }
-            }
-        });
-    });
-    
     const modal = document.getElementById('editServiceRequestModal');
     if (modal) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    if (modal.classList.contains('active')) {
+                        const editForm = document.getElementById('editServiceRequestForm');
+                        if (editForm && !editForm.hasAttribute('data-listener-added')) {
+                            editForm.addEventListener('submit', handleEditServiceRequestSubmit);
+                            editForm.setAttribute('data-listener-added', 'true');
+                            console.log('Added submit listener to edit form in modal');
+                        }
+                    }
+                }
+            });
+        });
         observer.observe(modal, { attributes: true });
     }
 });
@@ -522,7 +563,8 @@ async function handleEditServiceRequestSubmit(e) {
         return;
     }
     
-    const requestId = document.getElementById('editRequestId').value || window.currentEditingRequestId;
+    const editRequestIdEl = document.getElementById('editRequestId');
+    const requestId = editRequestIdEl ? editRequestIdEl.value : window.currentEditingRequestId;
     if (!requestId) {
         showToast('Không tìm thấy ID phiếu yêu cầu', 'error');
         return;
@@ -541,31 +583,31 @@ async function handleEditServiceRequestSubmit(e) {
         });
         
         const updatedRequest = {
-            serviceRequestNumber: document.getElementById('editServiceRequestNumber').value,
-            companyName: document.getElementById('editCompanyName').value,
-            address: document.getElementById('editAddress').value,
-            productCode: document.getElementById('editProductCode').value,
-            machineNumber: document.getElementById('editMachineNumber').value,
-            orderNumber: document.getElementById('editOrderNumber').value,
-            productDescription: document.getElementById('editProductDescription').value,
-            model: document.getElementById('editModel').value,
-            serialNumber: document.getElementById('editSerialNumber').value,
-            manufacturer: document.getElementById('editManufacturer').value,
-            problemDescription: document.getElementById('editProblemDescription').value,
-            problemDefinition: document.getElementById('editProblemDefinition').value,
-            serviceCompleted: document.getElementById('editServiceCompleted').value,
-            notes: document.getElementById('editNotes').value,
-            contactPerson: document.getElementById('editContactPerson').value,
-            phone: document.getElementById('editPhone').value,
-            startDate: document.getElementById('editStartDate').value,
-            startTime: document.getElementById('editStartTime').value,
-            endDate: document.getElementById('editEndDate').value,
-            endTime: document.getElementById('editEndTime').value,
-            totalDate: document.getElementById('editTotalDate').value,
-            totalTime: document.getElementById('editTotalTime').value,
-            travelInfo: document.getElementById('editTravelInfo').value,
+            serviceRequestNumber: document.getElementById('editServiceRequestNumber')?.value || '',
+            companyName: document.getElementById('editCompanyName')?.value || '',
+            address: document.getElementById('editAddress')?.value || '',
+            productCode: document.getElementById('editProductCode')?.value || '',
+            machineNumber: document.getElementById('editMachineNumber')?.value || '',
+            orderNumber: document.getElementById('editOrderNumber')?.value || '',
+            productDescription: document.getElementById('editProductDescription')?.value || '',
+            model: document.getElementById('editModel')?.value || '',
+            serialNumber: document.getElementById('editSerialNumber')?.value || '',
+            manufacturer: document.getElementById('editManufacturer')?.value || '',
+            problemDescription: document.getElementById('editProblemDescription')?.value || '',
+            problemDefinition: document.getElementById('editProblemDefinition')?.value || '',
+            serviceCompleted: document.getElementById('editServiceCompleted')?.value || '',
+            notes: document.getElementById('editNotes')?.value || '',
+            contactPerson: document.getElementById('editContactPerson')?.value || '',
+            phone: document.getElementById('editPhone')?.value || '',
+            startDate: document.getElementById('editStartDate')?.value || '',
+            startTime: document.getElementById('editStartTime')?.value || '',
+            endDate: document.getElementById('editEndDate')?.value || '',
+            endTime: document.getElementById('editEndTime')?.value || '',
+            totalDate: document.getElementById('editTotalDate')?.value || '',
+            totalTime: document.getElementById('editTotalTime')?.value || '',
+            travelInfo: document.getElementById('editTravelInfo')?.value || '',
             serviceTypes: serviceTypes,
-            status: document.getElementById('editStatus').value,
+            status: document.getElementById('editStatus')?.value || 'pending',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
@@ -1751,33 +1793,83 @@ window.editServiceRequest = function(requestId) {
 
     // Store the current request ID for form submission
     window.currentEditingRequestId = requestId;
-    document.getElementById('editRequestId').value = requestId;
+    const editRequestIdEl = document.getElementById('editRequestId');
+    if (editRequestIdEl) {
+        editRequestIdEl.value = requestId;
+    }
 
     // Populate the modal form with request data
-    document.getElementById('editServiceRequestNumber').value = request.serviceRequestNumber || '';
-    document.getElementById('editCompanyName').value = request.companyName || '';
-    document.getElementById('editContactPerson').value = request.contactPerson || '';
-    document.getElementById('editPhone').value = request.phone || '';
-    document.getElementById('editAddress').value = request.address || '';
-    document.getElementById('editProductCode').value = request.productCode || '';
-    document.getElementById('editMachineNumber').value = request.machineNumber || '';
-    document.getElementById('editOrderNumber').value = request.orderNumber || '';
-    document.getElementById('editProductDescription').value = request.productDescription || '';
-    document.getElementById('editModel').value = request.model || '';
-    document.getElementById('editSerialNumber').value = request.serialNumber || '';
-    document.getElementById('editManufacturer').value = request.manufacturer || '';
-    document.getElementById('editProblemDescription').value = request.problemDescription || '';
-    document.getElementById('editProblemDefinition').value = request.problemDefinition || '';
-    document.getElementById('editServiceCompleted').value = request.serviceCompleted || '';
-    document.getElementById('editNotes').value = request.notes || '';
-    document.getElementById('editStartDate').value = request.startDate || '';
-    document.getElementById('editStartTime').value = request.startTime || '';
-    document.getElementById('editEndDate').value = request.endDate || '';
-    document.getElementById('editEndTime').value = request.endTime || '';
-    document.getElementById('editTotalDate').value = request.totalDate || '';
-    document.getElementById('editTotalTime').value = request.totalTime || '';
-    document.getElementById('editTravelInfo').value = request.travelInfo || '';
-    document.getElementById('editStatus').value = request.status || 'pending';
+    const editServiceRequestNumberEl = document.getElementById('editServiceRequestNumber');
+    if (editServiceRequestNumberEl) editServiceRequestNumberEl.value = request.serviceRequestNumber || '';
+    
+    const editCompanyNameEl = document.getElementById('editCompanyName');
+    if (editCompanyNameEl) editCompanyNameEl.value = request.companyName || '';
+    
+    const editContactPersonEl = document.getElementById('editContactPerson');
+    if (editContactPersonEl) editContactPersonEl.value = request.contactPerson || '';
+    
+    const editPhoneEl = document.getElementById('editPhone');
+    if (editPhoneEl) editPhoneEl.value = request.phone || '';
+    
+    const editAddressEl = document.getElementById('editAddress');
+    if (editAddressEl) editAddressEl.value = request.address || '';
+    
+    const editProductCodeEl = document.getElementById('editProductCode');
+    if (editProductCodeEl) editProductCodeEl.value = request.productCode || '';
+    
+    const editMachineNumberEl = document.getElementById('editMachineNumber');
+    if (editMachineNumberEl) editMachineNumberEl.value = request.machineNumber || '';
+    
+    const editOrderNumberEl = document.getElementById('editOrderNumber');
+    if (editOrderNumberEl) editOrderNumberEl.value = request.orderNumber || '';
+    
+    const editProductDescriptionEl = document.getElementById('editProductDescription');
+    if (editProductDescriptionEl) editProductDescriptionEl.value = request.productDescription || '';
+    
+    const editModelEl = document.getElementById('editModel');
+    if (editModelEl) editModelEl.value = request.model || '';
+    
+    const editSerialNumberEl = document.getElementById('editSerialNumber');
+    if (editSerialNumberEl) editSerialNumberEl.value = request.serialNumber || '';
+    
+    const editManufacturerEl = document.getElementById('editManufacturer');
+    if (editManufacturerEl) editManufacturerEl.value = request.manufacturer || '';
+    
+    const editProblemDescriptionEl = document.getElementById('editProblemDescription');
+    if (editProblemDescriptionEl) editProblemDescriptionEl.value = request.problemDescription || '';
+    
+    const editProblemDefinitionEl = document.getElementById('editProblemDefinition');
+    if (editProblemDefinitionEl) editProblemDefinitionEl.value = request.problemDefinition || '';
+    
+    const editServiceCompletedEl = document.getElementById('editServiceCompleted');
+    if (editServiceCompletedEl) editServiceCompletedEl.value = request.serviceCompleted || '';
+    
+    const editNotesEl = document.getElementById('editNotes');
+    if (editNotesEl) editNotesEl.value = request.notes || '';
+    
+    const editStartDateEl = document.getElementById('editStartDate');
+    if (editStartDateEl) editStartDateEl.value = request.startDate || '';
+    
+    const editStartTimeEl = document.getElementById('editStartTime');
+    if (editStartTimeEl) editStartTimeEl.value = request.startTime || '';
+    
+    const editEndDateEl = document.getElementById('editEndDate');
+    if (editEndDateEl) editEndDateEl.value = request.endDate || '';
+    
+    const editEndTimeEl = document.getElementById('editEndTime');
+    if (editEndTimeEl) editEndTimeEl.value = request.endTime || '';
+    
+    const editTotalDateEl = document.getElementById('editTotalDate');
+    if (editTotalDateEl) editTotalDateEl.value = request.totalDate || '';
+    
+    const editTotalTimeEl = document.getElementById('editTotalTime');
+    if (editTotalTimeEl) editTotalTimeEl.value = request.totalTime || '';
+    
+    const editTravelInfoEl = document.getElementById('editTravelInfo');
+    if (editTravelInfoEl) editTravelInfoEl.value = request.travelInfo || '';
+    
+    const editStatusEl = document.getElementById('editStatus');
+    if (editStatusEl) editStatusEl.value = request.status || 'pending';
 
     // Set service types checkboxes
     const serviceTypes = request.serviceTypes || [];
@@ -2038,8 +2130,14 @@ async function handleNewServiceRequestSubmit(e) {
         
         // Reset form
         form.reset();
-        document.getElementById('serviceRequestNumber').value = generateServiceRequestNumber();
-        document.getElementById('notes').value = 'Thiết bị hoạt động ổn định, đường chuẩn vẫn còn áp dụng được với các mẫu phân tích hiện tại';
+        const serviceRequestNumberEl = document.getElementById('serviceRequestNumber');
+        if (serviceRequestNumberEl) {
+            serviceRequestNumberEl.value = generateServiceRequestNumber();
+        }
+        const notesEl = document.getElementById('notes');
+        if (notesEl) {
+            notesEl.value = 'Thiết bị hoạt động ổn định, đường chuẩn vẫn còn áp dụng được với các mẫu phân tích hiện tại';
+        }
         
         // Switch to service requests list
         setTimeout(() => {
@@ -2059,8 +2157,14 @@ function resetServiceRequestForm() {
     const form = document.getElementById('serviceRequestForm');
     if (form) {
         form.reset();
-        document.getElementById('serviceRequestNumber').value = generateServiceRequestNumber();
-        document.getElementById('notes').value = 'Thiết bị hoạt động ổn định, đường chuẩn vẫn còn áp dụng được với các mẫu phân tích hiện tại';
+        const serviceRequestNumberEl = document.getElementById('serviceRequestNumber');
+        if (serviceRequestNumberEl) {
+            serviceRequestNumberEl.value = generateServiceRequestNumber();
+        }
+        const notesEl = document.getElementById('notes');
+        if (notesEl) {
+            notesEl.value = 'Thiết bị hoạt động ổn định, đường chuẩn vẫn còn áp dụng được với các mẫu phân tích hiện tại';
+        }
     }
 }
 
@@ -2118,24 +2222,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Also add event listener when import modal is shown
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                const modal = document.getElementById('importModal');
-                if (modal && !modal.classList.contains('hidden')) {
-                    const importFile = document.getElementById('importFile');
-                    if (importFile && !importFile.hasAttribute('data-listener-added')) {
-                        importFile.addEventListener('change', handleFileSelect);
-                        importFile.setAttribute('data-listener-added', 'true');
-                        console.log('Added file select listener to import modal');
-                    }
-                }
-            }
-        });
-    });
-    
     const importModal = document.getElementById('importModal');
     if (importModal) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    if (!importModal.classList.contains('hidden')) {
+                        const importFile = document.getElementById('importFile');
+                        if (importFile && !importFile.hasAttribute('data-listener-added')) {
+                            importFile.addEventListener('change', handleFileSelect);
+                            importFile.setAttribute('data-listener-added', 'true');
+                            console.log('Added file select listener to import modal');
+                        }
+                    }
+                }
+            });
+        });
         observer.observe(importModal, { attributes: true });
     }
 });
@@ -2276,8 +2378,10 @@ async function performImport(data) {
         return;
     }
 
-    const skipDuplicates = document.getElementById('skipDuplicates').checked;
-    const validateData = document.getElementById('validateData').checked;
+    const skipDuplicatesEl = document.getElementById('skipDuplicates');
+    const validateDataEl = document.getElementById('validateData');
+    const skipDuplicates = skipDuplicatesEl ? skipDuplicatesEl.checked : false;
+    const validateData = validateDataEl ? validateDataEl.checked : true;
 
     showLoading(true);
     hideImportModal();
