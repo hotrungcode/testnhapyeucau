@@ -65,6 +65,9 @@ let dataCurrentDateToFilter = '';
 // Utility functions
 function showLoading(show = true) {
     const loadingScreen = document.getElementById('loadingScreen');
+    if (!loadingScreen) {
+        return;
+    }
     if (show) {
         loadingScreen.classList.remove('hidden');
     } else {
@@ -83,6 +86,19 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
+}
+
+// Safe storage availability check
+function storageAvailable(type = 'localStorage') {
+    try {
+        const storage = window[type];
+        const testKey = '__storage_test__';
+        storage.setItem(testKey, testKey);
+        storage.removeItem(testKey);
+        return true;
+    } catch (e) {
+        return false;
+    }
 }
 
 function showToast(message, type = 'info') {
@@ -111,6 +127,15 @@ function showToast(message, type = 'info') {
             </div>
         </div>
     `;
+
+    if (!toastContainer) {
+        try {
+            console[type === 'error' ? 'error' : 'log'](message);
+        } catch (e) {
+            // no-op
+        }
+        return;
+    }
 
     toastContainer.insertAdjacentHTML('beforeend', toastHtml);
 
@@ -1923,6 +1948,18 @@ window.updateServiceRequestInList = function(requestId, updatedData) {
 // Alternative data synchronization using localStorage
 window.syncServiceRequestUpdate = function(requestId, updatedData) {
     try {
+        // If storage is unavailable (e.g., blocked), fallback to event only
+        if (!storageAvailable()) {
+            const event = new CustomEvent('serviceRequestUpdated', {
+                detail: {
+                    requestId: requestId,
+                    data: updatedData
+                }
+            });
+            window.dispatchEvent(event);
+            return;
+        }
+
         // Store update in localStorage for cross-window communication
         const updateKey = `serviceRequestUpdate_${requestId}`;
         localStorage.setItem(updateKey, JSON.stringify({
@@ -1949,14 +1986,24 @@ window.syncServiceRequestUpdate = function(requestId, updatedData) {
 // Check for updates in localStorage
 window.checkForServiceRequestUpdates = function() {
     try {
+        if (!storageAvailable()) {
+            return;
+        }
         // Get all keys that match our pattern
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key && key.startsWith('serviceRequestUpdate_')) {
-                const updateData = JSON.parse(localStorage.getItem(key));
+                let updateData;
+                try {
+                    updateData = JSON.parse(localStorage.getItem(key));
+                } catch (err) {
+                    console.warn('Malformed localStorage data for key', key, err);
+                    localStorage.removeItem(key);
+                    continue;
+                }
                 
                 // Only process if it's from the last 5 seconds
-                if (Date.now() - updateData.timestamp < 5000) {
+                if (updateData && Date.now() - updateData.timestamp < 5000) {
                     console.log('Processing update from localStorage:', updateData);
                     
                     // Update the local array

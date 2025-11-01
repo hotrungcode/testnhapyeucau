@@ -483,33 +483,42 @@
             });
 
             // Login form submission
-            document.getElementById('loginForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const email = document.getElementById('email').value.trim();
-                const password = document.getElementById('password').value;
+            const loginFormEl = document.getElementById('loginForm');
+            if (loginFormEl) {
+                loginFormEl.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const email = document.getElementById('email')?.value?.trim() || '';
+                    const password = document.getElementById('password')?.value || '';
 
-                if (!email || !password) {
-                    showToast('Vui lòng nhập đầy đủ thông tin', '', 'warning');
-                    return;
-                }
+                    if (!email || !password) {
+                        showToast('Vui lòng nhập đầy đủ thông tin', '', 'warning');
+                        return;
+                    }
 
-                // Always use LOCAL persistence for persistent login
-                auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+                    // Always use LOCAL persistence for persistent login
+                    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-                signInWithEmail(email, password);
-            });
+                    signInWithEmail(email, password);
+                });
+            }
 
             // Google login
-            document.getElementById('googleLoginBtn').addEventListener('click', signInWithGoogle);
+            const googleLoginBtnEl = document.getElementById('googleLoginBtn');
+            if (googleLoginBtnEl) {
+                googleLoginBtnEl.addEventListener('click', signInWithGoogle);
+            }
 
 
             // Enter key support
-            document.getElementById('password').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('loginForm').dispatchEvent(new Event('submit'));
-                }
-            });
+            const passwordEl = document.getElementById('password');
+            if (passwordEl && loginFormEl) {
+                passwordEl.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        loginFormEl.dispatchEvent(new Event('submit'));
+                    }
+                });
+            }
 
 
         });
