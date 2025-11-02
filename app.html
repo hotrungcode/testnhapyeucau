@@ -43,13 +43,13 @@
 
                     <!-- User Menu - Mobile optimized -->
                     <div class="relative">
-                        <button id="userMenuBtn" class="flex items-center space-x-2 sm:space-x-3 text-gray-700 hover:text-gray-900">
+                        <button id="userMenuBtn" class="flex items-center space-x-2 sm:space-x-3 text-gray-700 hover:text-gray-900 p-2">
                             <img id="userAvatar" src="https://picsum.photos/seed/user/40/40.jpg" alt="Avatar" class="w-8 h-8 rounded-full">
                             <div class="hidden lg:block text-left">
                                 <p id="userName" class="text-sm font-medium">Loading...</p>
                                 <p id="userRole" class="text-xs text-gray-500">Loading...</p>
                             </div>
-                            <i class="fas fa-chevron-down text-xs hidden sm:block"></i>
+                            <i id="userChevron" class="fas fa-chevron-down text-xs"></i>
                         </button>
 
                         <!-- User Dropdown -->
@@ -581,6 +581,7 @@
                     </div>
                     
                     <!-- Company Information -->
+                    <h2 class="section-title">Thông tin công ty</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <div class="form-group">
                             <label class="form-label">Tên công ty</label>
@@ -593,6 +594,7 @@
                     </div>
                     
                     <!-- Contact Information -->
+                    <h2 class="section-title">Thông tin liên hệ</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <div class="form-group">
                             <label class="form-label">Người liên hệ</label>
@@ -605,6 +607,7 @@
                     </div>
                     
                     <!-- Product Information -->
+                    <h2 class="section-title">Thông tin thiết bị</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                         <div class="form-group">
                             <label class="form-label">Mã hàng</label>
@@ -633,6 +636,7 @@
                     </div>
                     
                     <!-- Product Description -->
+                    <h2 class="section-title">Mô tả vấn đề</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <div class="form-group">
                             <label class="form-label">Mô tả hàng hoá</label>
@@ -650,6 +654,7 @@
                     </div>
                     
                     <!-- Service Types -->
+                    <h2 class="section-title">Dịch vụ yêu cầu</h2>
                     <div class="form-group">
                         <label class="form-label">Loại dịch vụ</label>
                         <div class="checkbox-group">
@@ -681,12 +686,14 @@
                     </div>
                     
                     <!-- Service Completed -->
+                    <h2 class="section-title">Dịch vụ đã thực hiện</h2>
                     <div class="form-group">
                         <label class="form-label">Dịch vụ đã hoàn thành & Diễn giải chi tiết dịch vụ</label>
                         <textarea id="editServiceCompleted" class="form-input form-textarea" style="min-height: 120px;"></textarea>
                     </div>
                     
                     <!-- Time Information -->
+                    <h2 class="section-title">Thời gian thực hiện</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <div class="form-group">
                             <label class="form-label">Thời gian bắt đầu</label>
@@ -718,12 +725,14 @@
                     </div>
                     
                     <!-- Notes -->
+                    <h2 class="section-title">Ghi chú</h2>
                     <div class="form-group">
                         <label class="form-label">Ghi chú</label>
                         <textarea id="editNotes" class="form-input form-textarea"></textarea>
                     </div>
                     
                     <!-- Status -->
+                    <h2 class="section-title">Trạng thái phiếu yêu cầu</h2>
                     <div class="form-group">
                         <label class="form-label">Trạng thái phiếu yêu cầu</label>
                         <select id="editStatus" class="form-input">
@@ -733,13 +742,13 @@
                         </select>
                     </div>
                     
-                    <!-- Action Buttons -->
-                    <div class="flex justify-end space-x-4 pt-6 border-t">
-                        <button type="button" onclick="hideModal('editServiceRequestModal')" class="btn-secondary">
-                            <i class="fas fa-times mr-2"></i> Hủy
+                    <!-- Action Buttons (floating like view window) -->
+                    <div class="edit-floating-actions">
+                        <button type="button" onclick="hideModal('editServiceRequestModal')" class="action-btn btn-close">
+                            <i class="fas fa-times"></i> Hủy
                         </button>
-                        <button type="submit" class="btn-primary">
-                            <i class="fas fa-save mr-2"></i> Lưu thay đổi
+                        <button type="submit" class="action-btn btn-save">
+                            <i class="fas fa-save"></i> Lưu
                         </button>
                     </div>
                 </form>

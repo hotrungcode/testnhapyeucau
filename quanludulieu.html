@@ -104,10 +104,30 @@
             from { transform: translateX(100%); }
             to { transform: translateX(0); }
         }
+
+        /* Mobile layout fix for Data Management page:
+           Stack sidebar above main content and prevent sidebar transform offset */
+        @media (max-width: 768px) {
+            .data-mobile-stack {
+                flex-direction: column;
+            }
+            .data-mobile-stack .sidebar {
+                width: 100%;
+                min-height: auto;
+                transform: none !important; /* override global sidebar translate */
+                position: relative;
+                display: none; /* hide by default on mobile */
+                z-index: 50;
+            }
+            .data-mobile-stack .sidebar.open { display: block; }
+            .data-mobile-stack .main-pane {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="flex h-screen">
+    <div class="flex h-screen data-mobile-stack">
         <!-- Sidebar -->
         <div class="sidebar w-64 text-white p-6">
             <div class="mb-8">
@@ -136,11 +156,16 @@
         </div>
         
         <!-- Main Content -->
-        <div class="flex-1 overflow-y-auto">
+        <div class="flex-1 overflow-y-auto main-pane">
             <!-- Header -->
             <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-gray-800">Quản lý Dữ liệu</h2>
+                    <div class="flex items-center">
+                        <button id="dataSidebarToggle" class="text-gray-600 mr-3 lg:hidden">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h2 class="text-xl font-semibold text-gray-800">Quản lý Dữ liệu</h2>
+                    </div>
                     <div class="flex items-center space-x-4">
                         <span class="text-sm text-gray-600">Người dùng: <span id="currentUser" class="font-medium">Đang tải...</span></span>
                         <button onclick="logout()" class="text-red-600 hover:text-red-800">
@@ -1136,6 +1161,46 @@
             downloadFile(csvTemplate, 'service-request-template.csv');
             showToast('Tải file mẫu thành công!', 'success');
         }
+
+        // Mobile sidebar toggle for Data Management page
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.data-mobile-stack .sidebar');
+            const toggleBtn = document.getElementById('dataSidebarToggle');
+
+            if (sidebar && toggleBtn) {
+                const toggleSidebar = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sidebar.classList.toggle('open');
+                };
+
+                // Click/touch toggle for hamburger button
+                toggleBtn.addEventListener('click', toggleSidebar);
+                toggleBtn.addEventListener('touchend', toggleSidebar, { passive: false });
+
+                // Close when tapping outside of the sidebar
+                document.addEventListener('pointerdown', function(e) {
+                    if (
+                        window.innerWidth <= 768 &&
+                        sidebar.classList.contains('open') &&
+                        !e.target.closest('.sidebar') &&
+                        !e.target.closest('#dataSidebarToggle')
+                    ) {
+                        sidebar.classList.remove('open');
+                    }
+                }, { passive: true });
+
+                // Auto-close after selecting a nav item
+                const navItems = sidebar.querySelectorAll('[data-section], a.nav-item, button.nav-item');
+                navItems.forEach(item => {
+                    item.addEventListener('click', function() {
+                        if (window.innerWidth <= 768) {
+                            sidebar.classList.remove('open');
+                        }
+                    });
+                });
+            }
+        });
     </script>
 </body>
 </html>

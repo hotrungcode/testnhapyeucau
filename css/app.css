@@ -1712,41 +1712,62 @@ body {
     }
 }
 
-/* Sticky save button for edit modal */
-#editServiceRequestModal .flex.justify-end.space-x-4.pt-6.border-t {
-    position: sticky;
-    bottom: 0;
-    background: white;
-    padding-top: 1.5rem;
-    padding-bottom: 1.5rem;
-    margin: 0 -1.5rem;
-    border-top: 1px solid #e5e7eb;
-    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
-    z-index: 10;
+/* Floating edit modal action buttons (follow scroll like view window) */
+.edit-floating-actions {
+    position: fixed;
+    bottom: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 1100; /* above modal content */
 }
+@media (min-width: 768px) {
+    .edit-floating-actions {
+        bottom: 20px;
+        right: 20px;
+        flex-direction: row;
+        gap: 12px;
+    }
+}
+.edit-floating-actions .action-btn {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.edit-floating-actions .action-btn:hover {
+    transform: translateY(-2px);
+}
+.btn-save { background: #2563eb; color: white; }
+.btn-close { background: #6b7280; color: white; }
 
-/* Ensure modal content has proper padding to account for sticky button */
 #editServiceRequestModal .p-6.space-y-6 {
+    /* Extra bottom padding so content does not hide behind floating buttons */
     padding-bottom: 6rem;
 }
-
-/* Mobile responsive for sticky save button */
 @media (max-width: 768px) {
-    #editServiceRequestModal .flex.justify-end.space-x-4.pt-6.border-t {
-        margin: 0 -1rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-    }
-    
     #editServiceRequestModal .p-6.space-y-6 {
         padding-bottom: 5rem;
     }
-    
-    /* Ensure buttons are full width on mobile */
-    #editServiceRequestModal .flex.justify-end.space-x-4.pt-6.border-t button {
-        flex: 1;
-        min-width: 0;
-    }
+}
+
+/* Section title styling to make edit UI resemble view UI */
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #4f46e5;
+}
+@media (min-width: 768px) {
+    .section-title { font-size: 1.25rem; }
+}
+
+/* Hide floating actions in print */
+@media print {
+    .edit-floating-actions { display: none !important; }
 }

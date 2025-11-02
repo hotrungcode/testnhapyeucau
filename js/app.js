@@ -380,21 +380,100 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // User menu
+    // User menu (robust across devices: listen to pointerdown, pointerup, click, and touchend with double-fire guard)
     const userMenuBtn = document.getElementById('userMenuBtn');
     if (userMenuBtn) {
-        userMenuBtn.addEventListener('click', function() {
-            const userDropdown = document.getElementById('userDropdown');
+        const userDropdown = document.getElementById('userDropdown');
+        const userChevron = document.getElementById('userChevron');
+        // ARIA and accessibility
+        try {
+            userMenuBtn.setAttribute('aria-haspopup', 'true');
+            userMenuBtn.setAttribute('aria-controls', 'userDropdown');
+            if (!userMenuBtn.hasAttribute('aria-expanded')) {
+                userMenuBtn.setAttribute('aria-expanded', 'false');
+            }
+            // Ensure it's a button element behaves correctly on iOS
+            userMenuBtn.setAttribute('type', 'button');
+
+            // Make chevron independently interactive for mobile
+            if (userChevron) {
+                userChevron.setAttribute('role', 'button');
+                userChevron.setAttribute('tabindex', '0');
+                userChevron.setAttribute('aria-label', 'Mở menu người dùng');
+                userChevron.setAttribute('aria-controls', 'userDropdown');
+                userChevron.setAttribute('aria-expanded', 'false');
+                userChevron.style.cursor = 'pointer';
+            }
+        } catch (_) {}
+        let lastToggleAt = 0;
+        const toggleDropdown = function(e) {
+            if (e && typeof e.preventDefault === 'function' && e.cancelable) e.preventDefault();
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+
+            // Prevent double-fire on mobile (touchend + click + pointerdown/up)
+            const now = Date.now();
+            if (now - lastToggleAt < 350) return;
+            lastToggleAt = now;
+
             if (userDropdown) {
                 userDropdown.classList.toggle('hidden');
+                // If now opened, focus the logout item so "Đăng xuất" is immediately visible
+                if (!userDropdown.classList.contains('hidden')) {
+                    const logoutItem = document.getElementById('logoutBtn');
+                    if (logoutItem) {
+                        try { logoutItem.focus(); } catch (_) {}
+                    }
+                }
+            }
+
+            // Update aria-expanded for accessibility on both triggers
+            const expanded = userMenuBtn.getAttribute('aria-expanded') === 'true';
+            userMenuBtn.setAttribute('aria-expanded', (!expanded).toString());
+            if (userChevron) {
+                userChevron.setAttribute('aria-expanded', (!expanded).toString());
+            }
+        };
+
+        // Add multiple event types to maximize mobile compatibility on main button
+        userMenuBtn.addEventListener('pointerdown', toggleDropdown);
+        userMenuBtn.addEventListener('pointerup', toggleDropdown);
+        userMenuBtn.addEventListener('click', toggleDropdown);
+        userMenuBtn.addEventListener('touchend', toggleDropdown, { passive: false });
+
+        // Keyboard support on main button
+        userMenuBtn.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                toggleDropdown(e);
             }
         });
+
+        // Also wire the chevron to open the dropdown and show "Đăng xuất"
+        if (userChevron) {
+            userChevron.addEventListener('pointerdown', toggleDropdown);
+            userChevron.addEventListener('pointerup', toggleDropdown);
+            userChevron.addEventListener('click', toggleDropdown);
+            userChevron.addEventListener('touchend', toggleDropdown, { passive: false });
+            userChevron.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    toggleDropdown(e);
+                }
+            });
+        }
     }
 
-    // Logout
+    // Logout (pointer-friendly and mobile-safe)
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', async function() {
+        let lastTapAt = 0;
+        const logoutHandler = async function(e) {
+            if (e && typeof e.preventDefault === 'function' && e.cancelable) e.preventDefault();
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+
+            // Prevent duplicate triggers on touch devices
+            const now = Date.now();
+            if (now - lastTapAt < 350) return;
+            lastTapAt = now;
+
             try {
                 await auth.signOut();
                 window.location.href = 'index.html';
@@ -402,7 +481,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Logout error:', error);
                 showToast('Lỗi đăng xuất', 'error');
             }
-        });
+        };
+        logoutBtn.addEventListener('pointerup', logoutHandler);
+        logoutBtn.addEventListener('click', logoutHandler);
+        logoutBtn.addEventListener('touchend', logoutHandler, { passive: false });
     }
 
     // Navigation
@@ -510,8 +592,8 @@ async function loadAllUsers() {
         });
     }
 
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function(e) {
+    // Close dropdowns when clicking/touching outside (use pointerdown to handle all input types once)
+    const closeOnOutsideInteraction = function(e) {
         const userDropdown = document.getElementById('userDropdown');
         if (userDropdown && !e.target.closest('#userMenuBtn') && !e.target.closest('#userDropdown')) {
             userDropdown.classList.add('hidden');
@@ -523,7 +605,8 @@ async function loadAllUsers() {
                 sidebar.classList.remove('open');
             }
         }
-    });
+    };
+    document.addEventListener('pointerdown', closeOnOutsideInteraction, { passive: true });
     
     // Listen for custom events from localStorage updates
     window.addEventListener('serviceRequestUpdated', function(event) {
